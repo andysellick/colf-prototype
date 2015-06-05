@@ -4,110 +4,6 @@ var game = 0;
 var gamepause = 0;
 var gameloop;
 
-var generalimages = ['ball.png'];
-generalimages = preloadImages(generalimages);
-
-//preload images
-function preloadImages(array){
-    var imagedir = 'img/';
-    var tempimg;
-    for(i in array){
-        tempimg = new Image();
-        tempimg.src = imagedir + array[i];
-        array[i] = tempimg;
-    }
-    return(array);
-}
-
-//object for the ball
-var ballobj = function(x,y,w,h,sprite){
-    this.xpos = x;
-    this.ypos = y;
-    this.objwidth = w;
-    this.objheight = h;
-    this.sprite = sprite;
-    this.spritex = 0;
-    this.spritey = 0;
-    this.spritewidth = 10;
-    this.spriteheight = 10;
-    this.speed = 0;
-    this.decelerate = 0.05;
-    this.angle;
-    this.lastx; //fixme might need this
-    this.lasty;
-    this.origx; //stores where the ball started, in case it goes out of bounds
-    this.origy;
-
-    this.draw = function(){
-        canvas_cxt.drawImage(this.sprite, this.spritex, this.spritey, this.spritewidth, this.spriteheight, this.xpos - (this.spritewidth / 2), this.ypos - (this.spriteheight / 2), this.objwidth, this.objheight);
-    };
-    this.move = function(mousex,mousey){
-        if(this.speed){
-            this.lastx = this.xpos;
-            this.lasty = this.ypos;
-            this.xpos += Math.cos(this.angle*Math.PI/180) * this.speed;
-            this.ypos += Math.sin(this.angle*Math.PI/180) * this.speed;
-            this.speed = Math.max(this.speed -= this.decelerate,0);
-        }
-        else {
-            this.origx = this.xpos;
-            this.origy = this.ypos;
-            this.lastx = this.xpos;
-            this.lasty = this.ypos;
-        }
-    };
-    this.checkBoundary = function(){
-        if(this.xpos > canvas.width || this.xpos < 0 || this.ypos > canvas.height || this.ypos < 0){
-            this.xpos = this.origx;
-            this.ypos = this.origy;
-            this.speed = 0;
-        }
-    }
-}
-var ball; //variable for the ball, will need more than one
-
-//generic wall object
-var wallobj = function(x1,y1,x2,y2){
-    this.x1pos = x1;
-    this.y1pos = y1;
-    this.x2pos = x2;
-    this.y2pos = y2;
-    this.angle;
-    this.boundleft;
-    this.boundright;
-    this.boundup;
-    this.bounddown;
-
-    this.draw = function(){
-        canvas_cxt.beginPath();
-        canvas_cxt.moveTo(this.x1pos,this.y1pos);
-        canvas_cxt.lineTo(this.x2pos,this.y2pos);
-        canvas_cxt.stroke();
-    }
-    this.calculateAngle = function(){
-        var anglex = this.x1pos - this.x2pos;
-        var angley = this.y1pos - this.y2pos;
-        this.angle = Math.atan2(angley,anglex) * 180 / Math.PI;
-        if(this.angle > 360){
-            this.angle = this.angle - 360;
-        }
-        if(this.angle < 0){
-            this.angle = 360 + this.angle;
-        }
-
-        console.log(this.angle);
-        //work out bounds of wall
-        //fixme slight hack to give a straight line a boundary
-        this.boundleft = Math.min(this.x1pos - 5,this.x2pos -5);
-        this.boundright = Math.max(this.x1pos + 5,this.x2pos + 5);
-        this.boundup = Math.min(this.y1pos - 5,this.y2pos - 5);
-        this.bounddown = Math.max(this.y1pos + 5,this.y2pos + 5);
-    }
-    this.calculateAngle();
-}
-
-var walls = []; //stores all walls
-
 (function( window, undefined ) {
 var lenny = {
     general: {
@@ -145,11 +41,12 @@ var lenny = {
         initGame: function(){
             game = 1;
             player = 0;
-            enemies = [];
-            objects = [];
+            ball = 0;
+            walls = [];
 
             lenny.objects.setupBall();
             lenny.objects.setupWalls();
+            lenny.objects.setupSlopes();
         },
         //pause the game for a few milliseconds
         pauseGame: function(){
@@ -221,6 +118,14 @@ var lenny = {
             walls.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
             walls.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
             walls.push(new wallobj(5,canvas.height - 5,5,5));
+        },
+        setupSlopes: function(){
+            /*
+            slopes.push(new slopeobj(0,canvas.height / 2, canvas.width / 3, canvas.height / 2, 1));
+            slopes.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
+            slopes.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
+            slopes.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
+            */
         }
     },
     game: {
@@ -229,14 +134,17 @@ var lenny = {
                 lenny.general.clearCanvas(); //clear canvas, seems to be causing massive horrible flickering in firefox?
 
                 ball.move();
-                ball.checkBoundary();
                 if(ball.speed){
                     lenny.game.checkCollisions();
                 }
 
+                for(var i = 0; i < slopes.length; i++){
+                    slopes[i].draw();
+                }
                 for(var i = 0; i < walls.length; i++){
                     walls[i].draw();
                 }
+                ball.checkBoundary(); //need to do this last otherwise it causes a bug where balls right at the boundary but stopped by a wall cannot bounce off that wall if launched at full power
                 ball.draw();
 
                 if(!gamepause){
@@ -247,30 +155,12 @@ var lenny = {
                 }
             }
         },
-        moveBall: function(mousex,mousey,speed){
-            var anglex = ball.xpos - mousex;
-            var angley = ball.ypos - mousey;
-            var theta = Math.atan2(angley,anglex) * 180 / Math.PI;
-            if(theta > 360){
-                theta = theta - 360;
-            }
-            if(theta < 0){
-                theta = 360 + theta;
-            }
-    
-            //console.log(mousex,mousey,theta,speed);
-            ball.angle = theta;
-            ball.speed = speed;
-            ball.origx = ball.xpos;
-            ball.origy = ball.ypos;
-        },
         checkCollisions: function(){
             for(var i = 0; i < walls.length; i++){
-                if(lenny.game.checkCollision(walls[i],ball)){
-                    //console.log('collision');
+                //if(lenny.game.checkCollision(walls[i],ball)){
+                if(lenny.game.checkLinesIntersect(walls[i].x1pos,walls[i].y1pos,walls[i].x2pos,walls[i].y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
                     //work out which side of the wall the ball's last position was
                     //check if ball's current position is the other side of the wall
-
                     var d = ((ball.xpos - walls[i].x1pos) * (walls[i].y2pos - walls[i].y1pos)) - ((ball.ypos - walls[i].y1pos) * (walls[i].x2pos - walls[i].x1pos));
                     var lastd = ((ball.lastx - walls[i].x1pos) * (walls[i].y2pos - walls[i].y1pos)) - ((ball.lasty - walls[i].y1pos) * (walls[i].x2pos - walls[i].x1pos));
 
@@ -280,32 +170,60 @@ var lenny = {
                         //console.log('ball:',ball.angle,'wall:',walls[i].angle);
                         //var angle = 180 - Math.abs(Math.abs(ball.angle - walls[i].angle) - 180);
                         var angle = lenny.maths.preserveAngleDiff(ball.angle,walls[i].angle);
-                        //var angle = angleDiff(ball.angle,walls[i].angle);
                         angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
                         //now move the ball back to where it was to prevent flipping over the line bug
                         //fixme need to do something better than this?
                         ball.xpos = ball.lastx;
                         ball.ypos = ball.lasty;
-
                         ball.angle = angle;
+                        //console.log(ball.angle,ball.xpos,ball.lastx,ball.speed);
+                    }
+                }
+            }
+            for(var i = 0; i < slopes.length; i++){
+                if(lenny.game.checkCollision(slopes[i],ball)){
+                    //console.log('on a slope');
+                    //compare ball angle with slope angle
+                    
+                    var angleDiff = lenny.maths.angleDiff(ball.angle,slopes[i].angle);
+                    //console.log(angleDiff,ball.angle,'slope',slopes[i].angle);
+                    if(angleDiff > 90){
+                        ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
+                    }
+                    else {
+                        ball.speed = Math.min(10,ball.speed += 0.2);
                     }
                 }
             }
         },
-        //large scale simple collision checking function between ball and a wall, defined by boundary area. If the ball is in this space proceed to more complex collision detection
-        checkCollision: function(wall,ball){
+        //check whether two lines intersect, e.g. the line of a wall and the path of the ball
+        //https://gist.github.com/Joncom/e8e8d18ebe7fe55c3894
+        checkLinesIntersect: function(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y) {
+            var s1_x, s1_y, s2_x, s2_y;
+            s1_x = p1_x - p0_x;
+            s1_y = p1_y - p0_y;
+            s2_x = p3_x - p2_x;
+            s2_y = p3_y - p2_y;
+             
+            var s, t;
+            s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+            t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+             
+            if (s >= 0 && s <= 1 && t >= 0 && t <= 1){
+                return 1; // Collision detected
+            }
+            return 0; // No collision
+        },
+        //large scale simple collision checking function between ball and a simple object
+        checkCollision: function(obj,ball){
             //rule out any possible collisions, remembering that all y numbers are inverted on canvas
-            //player bottom edge is higher than object top edge
-            if(ball.ypos < wall.boundup)
+            if(ball.ypos < obj.boundup) //player bottom edge is higher than object top edge
                 return(0);
-            //player top edge is lower than obj bottom edge
-            if(ball.ypos > wall.bounddown)
+            if(ball.ypos > obj.bounddown) //player top edge is lower than obj bottom edge
                 return(0);
-            //player left edge is to the right of obj right edge
-            if(ball.xpos > wall.boundright)
+            if(ball.xpos > obj.boundright) //player left edge is to the right of obj right edge
                 return(0);
-            //player right edge is to the left of obj left edge
-            if(ball.xpos < wall.boundleft)
+            if(ball.xpos < obj.boundleft) //player right edge is to the left of obj left edge
                 return(0);
             return(1); //collision
         }
@@ -322,8 +240,9 @@ window.onload = function(){
     var speed;
     var speedtimer;
 
+    //I'm not sure we want to do this - it resets the game
     $(window).on('resize',function(){
-        resetAndResize();
+        //resetAndResize();
     });
 /*
     $canvas.mousemove(function(e){
@@ -339,17 +258,21 @@ window.onload = function(){
     });
 */
     $canvas.on('mousedown',function(e){
-        speed = 0;
-        speedtimer = setInterval(increaseSpeed,80);
+        if(ball.speed == 0){
+            speed = 0;
+            speedtimer = setInterval(increaseSpeed,80);
+        }
     });
     $canvas.on('mouseup',function(e){
-        var offs = $(this).offset();
-        clearInterval(speedtimer);
-        lenny.game.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
+        if(ball.speed == 0){
+            var offs = $(this).offset();
+            clearInterval(speedtimer);
+            ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
+        }
     });
 
     function increaseSpeed(){
-        speed = Math.min(speed += 1, 10);
+        speed = Math.min(speed += 1, ball.maxspeed);
         //console.log(speed);
     }
 
