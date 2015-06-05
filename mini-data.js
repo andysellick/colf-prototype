@@ -33,7 +33,7 @@ var ballobj = function(x,y,w,h,sprite){
     this.spritewidth = 10;
     this.spriteheight = 10;
     this.speed = 0;
-    this.maxspeed = 100;
+    this.maxspeed = 10;
     this.decelerate = 0.05;
     this.angle;
     this.lastx; //fixme might need this
@@ -124,12 +124,10 @@ var wallobj = function(x1,y1,x2,y2){
         //console.log(this.angle);
         //work out bounds of wall
         //fixme slight hack to give a straight line a boundary
-        var wallbound = 0;
-
-        this.boundleft = Math.min(this.x1pos - wallbound,this.x2pos - wallbound);
-        this.boundright = Math.max(this.x1pos + wallbound,this.x2pos + wallbound);
-        this.boundup = Math.min(this.y1pos - wallbound,this.y2pos - wallbound);
-        this.bounddown = Math.max(this.y1pos + wallbound,this.y2pos + wallbound);
+        this.boundleft = Math.min(this.x1pos,this.x2pos);
+        this.boundright = Math.max(this.x1pos,this.x2pos);
+        this.boundup = Math.min(this.y1pos,this.y2pos);
+        this.bounddown = Math.max(this.y1pos,this.y2pos);
     }
     this.calculateAngle();
 }
@@ -142,7 +140,7 @@ var slopeobj = function(x,y,w,h,dir){
     this.objwidth = w;
     this.objheight = h;
     this.slopedir = dir; //direction can be 1 (n), 2 (e), 3 (s), 4 (w). In each instance the direction is from up to down
-    this.steepness = 10;
+    this.steepness = 1;
     this.boundup;
     this.boundright;
     this.bounddown;

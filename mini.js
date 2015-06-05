@@ -120,12 +120,10 @@ var lenny = {
             walls.push(new wallobj(5,canvas.height - 5,5,5));
         },
         setupSlopes: function(){
-            /*
             slopes.push(new slopeobj(0,canvas.height / 2, canvas.width / 3, canvas.height / 2, 1));
             slopes.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
             slopes.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
             slopes.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
-            */
         }
     },
     game: {
@@ -184,14 +182,33 @@ var lenny = {
                 if(lenny.game.checkCollision(slopes[i],ball)){
                     //console.log('on a slope');
                     //compare ball angle with slope angle
-                    
-                    var angleDiff = lenny.maths.angleDiff(ball.angle,slopes[i].angle);
+
+                    //var angleDiff = lenny.maths.angleDiff(ball.angle,slopes[i].angle);
+                    var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,slopes[i].angle);
                     //console.log(angleDiff,ball.angle,'slope',slopes[i].angle);
-                    if(angleDiff > 90){
-                        ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
+                    /*
+                    var turnby = (Math.abs(angleDiff) / 180) * 100; //slopes[i].steepness; //fixme need to adjust - the nearer to 0 the angleDiff is, the smaller this must be
+                    turnby = (turnby / slopes[i].steepness) * 100;
+                    */
+                    var turnby = slopes[i].steepness;
+                    console.log(turnby);
+                    if(angleDiff < 0){
+                        turnby = -turnby;
                     }
-                    else {
-                        ball.speed = Math.min(10,ball.speed += 0.2);
+
+                    if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
+                        ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
+                        ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                    }
+                    else { //increase if going down
+                        ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2);
+                        ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                    }
+
+                    if(ball.speed == 0){
+                        //console.log('wat');
+                        ball.speed += 0.3;
+                        ball.angle = slopes[i].angle; //fixme?
                     }
                 }
             }
