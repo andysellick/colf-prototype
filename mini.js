@@ -3,6 +3,10 @@ var canvas_cxt;
 var game = 0;
 var gamepause = 0;
 var gameloop;
+var mode = 1; //1,2,3: playing, drawing or editing
+var drawobj = 1; //defaults to wall
+var currobj = []; //stores the existing attributes of an object being created
+var editobj; //the currently being edited object
 
 (function( window, undefined ) {
 var lenny = {
@@ -18,7 +22,7 @@ var lenny = {
         initCanvasSize: function(){
             //ideal size for canvas
             var destwidth = 600;
-            var destheight = 800;
+            var destheight = 600;
             var aspect = Math.floor(($(window).height() / destheight) * destwidth);
 
             var cwidth = Math.min(destwidth, $(window).width());
@@ -42,11 +46,13 @@ var lenny = {
             game = 1;
             player = 0;
             ball = 0;
-            walls = [];
+            //walls = [];
+            obstacles = [];
 
             lenny.objects.setupBall();
-            lenny.objects.setupWalls();
-            lenny.objects.setupSlopes();
+            //lenny.objects.setupWalls();
+            //lenny.objects.setupSlopes();
+            lenny.objects.setupObstacles();
         },
         //pause the game for a few milliseconds
         pauseGame: function(){
@@ -109,21 +115,23 @@ var lenny = {
         setupBall: function(){
             ball = new ballobj(canvas.width / 2,canvas.height / 2,10,10,generalimages[0]);
         },
-        setupWalls: function(){
-            walls.push(new wallobj(canvas.width/4,canvas.height/8,canvas.width/4 * 3,canvas.height/8 * 2));
-            walls.push(new wallobj(canvas.width/4,canvas.height/8 * 7,canvas.width/4 * 3,canvas.height/8 * 6));
+        setupObstacles: function(){
+            //fixme since combining all obstacles into one array it's harder to logically draw them in layers, so specific ordering is required
+            //slopes
+            obstacles.push(new slopeobj(0,canvas.height / 2, canvas.width / 3, canvas.height / 2, 1));
+            obstacles.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
+            obstacles.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
+            obstacles.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
 
+            //walls
+            obstacles.push(new wallobj(canvas.width/4,canvas.height/8,canvas.width/4 * 3,canvas.height/8 * 2));
+            obstacles.push(new wallobj(canvas.width/4,canvas.height/8 * 7,canvas.width/4 * 3,canvas.height/8 * 6));
             /* temp boundary */
-            walls.push(new wallobj(5,5,canvas.width - 5,5));
-            walls.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
-            walls.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
-            walls.push(new wallobj(5,canvas.height - 5,5,5));
-        },
-        setupSlopes: function(){
-            slopes.push(new slopeobj(0,canvas.height / 2, canvas.width / 3, canvas.height / 2, 1));
-            slopes.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
-            slopes.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
-            slopes.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
+            obstacles.push(new wallobj(5,5,canvas.width - 5,5));
+            obstacles.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
+            obstacles.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
+            obstacles.push(new wallobj(5,canvas.height - 5,5,5));
+
         }
     },
     game: {
@@ -136,12 +144,18 @@ var lenny = {
                     lenny.game.checkCollisions();
                 }
 
-                for(var i = 0; i < slopes.length; i++){
-                    slopes[i].draw();
+                for(var i = 0; i < obstacles.length; i++){
+                    obstacles[i].draw();
                 }
-                for(var i = 0; i < walls.length; i++){
-                    walls[i].draw();
+                
+                if(editobj > -1){
+                    canvas_cxt.beginPath();
+                    canvas_cxt.rect(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].xpos + obstacles[editobj].objwidth + 5, obstacles[editobj].ypos + obstacles[editobj].objheight + 5);
+                    canvas_cxt.lineWidth = 2;
+                    canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
+                    canvas_cxt.stroke();
                 }
+
                 ball.checkBoundary(); //need to do this last otherwise it causes a bug where balls right at the boundary but stopped by a wall cannot bounce off that wall if launched at full power
                 ball.draw();
 
@@ -154,61 +168,62 @@ var lenny = {
             }
         },
         checkCollisions: function(){
-            for(var i = 0; i < walls.length; i++){
-                //if(lenny.game.checkCollision(walls[i],ball)){
-                if(lenny.game.checkLinesIntersect(walls[i].x1pos,walls[i].y1pos,walls[i].x2pos,walls[i].y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
-                    //work out which side of the wall the ball's last position was
-                    //check if ball's current position is the other side of the wall
-                    var d = ((ball.xpos - walls[i].x1pos) * (walls[i].y2pos - walls[i].y1pos)) - ((ball.ypos - walls[i].y1pos) * (walls[i].x2pos - walls[i].x1pos));
-                    var lastd = ((ball.lastx - walls[i].x1pos) * (walls[i].y2pos - walls[i].y1pos)) - ((ball.lasty - walls[i].y1pos) * (walls[i].x2pos - walls[i].x1pos));
-
-                    //if so, calculate angle ball should bounce off wall
-                    //set ball angle, and it should bounce?
-                    if(d > 0 && lastd < 0 || d < 0 && lastd > 0){
-                        //console.log('ball:',ball.angle,'wall:',walls[i].angle);
-                        //var angle = 180 - Math.abs(Math.abs(ball.angle - walls[i].angle) - 180);
-                        var angle = lenny.maths.preserveAngleDiff(ball.angle,walls[i].angle);
-                        angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
-                        //now move the ball back to where it was to prevent flipping over the line bug
-                        //fixme need to do something better than this?
-                        ball.xpos = ball.lastx;
-                        ball.ypos = ball.lasty;
-                        ball.angle = angle;
-                        //console.log(ball.angle,ball.xpos,ball.lastx,ball.speed);
+            for(var i = 0; i < obstacles.length; i++){
+                var obst = obstacles[i];
+                if(obst.objtype == "wall"){
+                    //if(lenny.game.checkCollision(walls[i],ball)){
+                    if(lenny.game.checkLinesIntersect(obst.x1pos,obst.y1pos,obst.x2pos,obst.y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
+                        //work out which side of the wall the ball's last position was
+                        //check if ball's current position is the other side of the wall
+                        var d = ((ball.xpos - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.ypos - obst.y1pos) * (obst.x2pos - obst.x1pos));
+                        var lastd = ((ball.lastx - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.lasty - obst.y1pos) * (obst.x2pos - obst.x1pos));
+    
+                        //if so, calculate angle ball should bounce off wall
+                        //set ball angle, and it should bounce?
+                        if(d > 0 && lastd < 0 || d < 0 && lastd > 0){
+                            //console.log('ball:',ball.angle,'wall:',walls[i].angle);
+                            //var angle = 180 - Math.abs(Math.abs(ball.angle - walls[i].angle) - 180);
+                            var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
+                            angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
+                            //now move the ball back to where it was to prevent flipping over the line bug
+                            //fixme need to do something better than this?
+                            ball.xpos = ball.lastx;
+                            ball.ypos = ball.lasty;
+                            ball.angle = angle;
+                            //console.log(ball.angle,ball.xpos,ball.lastx,ball.speed);
+                        }
                     }
                 }
-            }
-            for(var i = 0; i < slopes.length; i++){
-                if(lenny.game.checkCollision(slopes[i],ball)){
-                    //console.log('on a slope');
-                    //compare ball angle with slope angle
+                else if(obst.objtype == "slope"){
+                    if(lenny.game.checkCollision(obst,ball)){
+                        //compare ball angle with slope angle
+                        var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
+                        var turnby = obst.steepness;
+                        console.log(turnby);
+                        if(angleDiff < 0){
+                            turnby = -turnby;
+                        }
 
-                    //var angleDiff = lenny.maths.angleDiff(ball.angle,slopes[i].angle);
-                    var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,slopes[i].angle);
-                    //console.log(angleDiff,ball.angle,'slope',slopes[i].angle);
-                    /*
-                    var turnby = (Math.abs(angleDiff) / 180) * 100; //slopes[i].steepness; //fixme need to adjust - the nearer to 0 the angleDiff is, the smaller this must be
-                    turnby = (turnby / slopes[i].steepness) * 100;
-                    */
-                    var turnby = slopes[i].steepness;
-                    console.log(turnby);
-                    if(angleDiff < 0){
-                        turnby = -turnby;
-                    }
-
-                    if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
-                        ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
-                        ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
-                    }
-                    else { //increase if going down
-                        ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2);
-                        ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
-                    }
-
-                    if(ball.speed == 0){
-                        //console.log('wat');
-                        ball.speed += 0.3;
-                        ball.angle = slopes[i].angle; //fixme?
+                        if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
+                            ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
+                            ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                        }
+                        else { //increase if going down
+                            ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2);
+                            ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                        }
+    
+                        if(ball.speed == 0){
+                            //console.log('wat');
+                            ball.speed += 0.4;
+                            var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
+                            if(angle < 0){
+                                ball.angle = lenny.maths.alterAngle(ball.angle,360,180 - (-angle * 2));
+                            }
+                            else {
+                                ball.angle = lenny.maths.alterAngle(ball.angle,360,-180 + (angle * 2));
+                            }
+                        }
                     }
                 }
             }
@@ -244,7 +259,42 @@ var lenny = {
                 return(0);
             return(1); //collision
         }
+    },
+    editor: {
+        switchModes: function(chosen){
+            //console.log(chosen);
+            mode = chosen;
+        },
+        drawObj: function(xpos,ypos){
+            if(drawobj == 1){ //draw a wall
+                //console.log(xpos,ypos);
+                if(!currobj.len){
+                    //currobj.push(
+                }
+            }
+        },
+        editObj: function(xpos,ypos){
+            if(!editobj){
+                //console.log('nothing there');
+                var cursor = new ballobj(xpos,ypos,0,0,generalimages[0]);
+                console.log('editing');
+                for(var i = 0; i < obstacles.length; i++){
+                    if(lenny.game.checkCollision(obstacles[i],cursor)){
+                        console.log('matched',i);
+                        break;
+                    }
+                }
+                //console.log(i);
+                editobj = i;
+                var obst = obstacles[i];
+                console.log(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].xpos + obstacles[editobj].objwidth + 5, obstacles[editobj].ypos + obstacles[editobj].objheight + 5)
+                //draw bounding box round element
+                //get editable attributes
+                //put editable attributes into edit box
+                //put remove button into edit box
+            }
 
+        }
     }
 };
 window.lenny = lenny;
@@ -275,17 +325,36 @@ window.onload = function(){
     });
 */
     $canvas.on('mousedown',function(e){
-        if(ball.speed == 0){
-            speed = 0;
-            speedtimer = setInterval(increaseSpeed,80);
+        if(mode == 1){
+            if(ball.speed == 0){
+                speed = 0;
+                speedtimer = setInterval(increaseSpeed,80);
+            }
         }
     });
     $canvas.on('mouseup',function(e){
-        if(ball.speed == 0){
-            var offs = $(this).offset();
-            clearInterval(speedtimer);
-            ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
+        var offs = $(this).offset();
+        if(mode == 1){
+            if(ball.speed == 0){
+                clearInterval(speedtimer);
+                ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
+            }
         }
+        else {
+            if(mode == 2){ //draw
+                lenny.editor.drawObj(e.pageX - offs.left,e.pageY - offs.top);
+            }
+            else if(mode == 3){ //edit
+                lenny.editor.editObj(e.pageX - offs.left,e.pageY - offs.top);
+            }
+        }
+    });
+
+    $('.js-mode').on('click',function(){
+        lenny.editor.switchModes($(this).val());
+    });
+    $('.js-draw').on('click',function(){
+        drawobj = $(this).val();
     });
 
     function increaseSpeed(){

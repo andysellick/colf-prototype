@@ -14,11 +14,34 @@
             display:block;
             margin:0 auto;
             cursor: crosshair;
+            background:#FFFFFF;
+        }
+        .controls {
+            position:absolute;
+            top:0;
+            right:0;
+            padding:1em;
+            border:solid 1px #333333;
+            border-right:0;
+            border-top:0;
+        }
+        .controls label {
+            display:block;
+            padding:0 0 0.1em 0;
+            cursor:pointer;
         }
     </style>
 </head>
 
 <body>
+    <div class="controls">
+        <label><input type="radio" name="mode" class="js-mode" value="1" checked> Test</label>
+        <label><input type="radio" name="mode" class="js-mode" value="2"> Draw</label>
+        <label><input type="radio" name="mode" class="js-mode" value="3"> Edit</label>
+        Draw:
+        <label><input type="radio" name="obj" class=js-draw" value="1" checked/> Wall</label>
+        <label><input type="radio" name="obj" class=js-draw" value="2"/> Slope</label>
+    </div>
     <canvas id="canvas" class="canvas"></canvas>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>

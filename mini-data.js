@@ -93,8 +93,9 @@ var ballobj = function(x,y,w,h,sprite){
 
 //generic wall object
 var wallobj = function(x1,y1,x2,y2){
-    this.x1pos = x1;
-    this.y1pos = y1;
+    this.objtype = "wall";
+    this.xpos = x1;
+    this.ypos = y1;
     this.x2pos = x2;
     this.y2pos = y2;
     this.angle;
@@ -102,18 +103,20 @@ var wallobj = function(x1,y1,x2,y2){
     this.boundright;
     this.boundup;
     this.bounddown;
+    this.objwidth;
+    this.objheight;
 
     //draw - it's just a line
     this.draw = function(){
         canvas_cxt.beginPath();
-        canvas_cxt.moveTo(this.x1pos,this.y1pos);
+        canvas_cxt.moveTo(this.xpos,this.ypos);
         canvas_cxt.lineTo(this.x2pos,this.y2pos);
         canvas_cxt.stroke();
     }
     //calculate the angle of the wall. This is stored and used later when determining the angle to bounce balls off
-    this.calculateAngle = function(){
-        var anglex = this.x1pos - this.x2pos;
-        var angley = this.y1pos - this.y2pos;
+    this.doSetup = function(){
+        var anglex = this.xpos - this.x2pos;
+        var angley = this.ypos - this.y2pos;
         this.angle = Math.atan2(angley,anglex) * 180 / Math.PI;
         if(this.angle > 360){
             this.angle = this.angle - 360;
@@ -124,17 +127,21 @@ var wallobj = function(x1,y1,x2,y2){
         //console.log(this.angle);
         //work out bounds of wall
         //fixme slight hack to give a straight line a boundary
-        this.boundleft = Math.min(this.x1pos,this.x2pos);
-        this.boundright = Math.max(this.x1pos,this.x2pos);
-        this.boundup = Math.min(this.y1pos,this.y2pos);
-        this.bounddown = Math.max(this.y1pos,this.y2pos);
+        this.boundleft = Math.min(this.xpos,this.x2pos);
+        this.boundright = Math.max(this.xpos,this.x2pos);
+        this.boundup = Math.min(this.ypos,this.y2pos);
+        this.bounddown = Math.max(this.ypos,this.y2pos);
+        //fixme bit inefficient to store this information twice
+        this.objwidth = this.boundright - this.boundleft;
+        this.objheight = this.bounddown - this.boundup;
     }
-    this.calculateAngle();
+    this.doSetup();
 }
 
 
 //generic slope object
 var slopeobj = function(x,y,w,h,dir){
+    this.objtype = "slope";
     this.xpos = x;
     this.ypos = y;
     this.objwidth = w;
@@ -193,6 +200,9 @@ var slopeobj = function(x,y,w,h,dir){
 
 
 var ball; //variable for the ball, will need more than one
-var walls = []; //stores all walls
-var slopes = []; //stores all slopes
+//var walls = []; //stores all walls
+//var slopes = []; //stores all slopes
+
+var obstacles = []; //stores all walls, slopes, etc.
+
 
