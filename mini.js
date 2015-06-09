@@ -118,19 +118,19 @@ var lenny = {
         setupObstacles: function(){
             //fixme since combining all obstacles into one array it's harder to logically draw them in layers, so specific ordering is required
             //slopes
-            obstacles.push(new slopeobj(0,canvas.height / 2, canvas.width / 3, canvas.height / 2, 1));
-            obstacles.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
-            obstacles.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
-            obstacles.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
+            obstacles.push(new slopeobj(canvas.width / 4,canvas.height / 4, canvas.width / 8, canvas.height / 3, 1));
+            //obstacles.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
+            //obstacles.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
+            //obstacles.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
 
             //walls
             obstacles.push(new wallobj(canvas.width/4,canvas.height/8,canvas.width/4 * 3,canvas.height/8 * 2));
             obstacles.push(new wallobj(canvas.width/4,canvas.height/8 * 7,canvas.width/4 * 3,canvas.height/8 * 6));
             /* temp boundary */
-            obstacles.push(new wallobj(5,5,canvas.width - 5,5));
-            obstacles.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
-            obstacles.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
-            obstacles.push(new wallobj(5,canvas.height - 5,5,5));
+            //obstacles.push(new wallobj(5,5,canvas.width - 5,5));
+            //obstacles.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
+            //obstacles.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
+            //obstacles.push(new wallobj(5,canvas.height - 5,5,5));
 
         }
     },
@@ -147,10 +147,11 @@ var lenny = {
                 for(var i = 0; i < obstacles.length; i++){
                     obstacles[i].draw();
                 }
-                
-                if(editobj > -1){
+
+                //draw bounding box round element, if element being edited
+                if(mode == 3 && editobj > -1){
                     canvas_cxt.beginPath();
-                    canvas_cxt.rect(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].xpos + obstacles[editobj].objwidth + 5, obstacles[editobj].ypos + obstacles[editobj].objheight + 5);
+                    canvas_cxt.rect(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].objwidth + 10, obstacles[editobj].objheight + 10);
                     canvas_cxt.lineWidth = 2;
                     canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
                     canvas_cxt.stroke();
@@ -264,6 +265,9 @@ var lenny = {
         switchModes: function(chosen){
             //console.log(chosen);
             mode = chosen;
+            if(mode == 1){ //testing, need to reset some things
+                editobj = -1;
+            }
         },
         drawObj: function(xpos,ypos){
             if(drawobj == 1){ //draw a wall
@@ -274,26 +278,33 @@ var lenny = {
             }
         },
         editObj: function(xpos,ypos){
-            if(!editobj){
-                //console.log('nothing there');
-                var cursor = new ballobj(xpos,ypos,0,0,generalimages[0]);
-                console.log('editing');
-                for(var i = 0; i < obstacles.length; i++){
-                    if(lenny.game.checkCollision(obstacles[i],cursor)){
-                        console.log('matched',i);
-                        break;
-                    }
+            var matched = 0;
+            var cursor = new ballobj(xpos,ypos,0,0,generalimages[0]);
+            for(var i = 0; i < obstacles.length; i++){
+                if(lenny.game.checkCollision(obstacles[i],cursor)){
+                    matched = 1;
+                    break;
                 }
-                //console.log(i);
+            }
+            if(matched){
                 editobj = i;
-                var obst = obstacles[i];
-                console.log(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].xpos + obstacles[editobj].objwidth + 5, obstacles[editobj].ypos + obstacles[editobj].objheight + 5)
-                //draw bounding box round element
+                var obst = obstacles[editobj];
                 //get editable attributes
                 //put editable attributes into edit box
                 //put remove button into edit box
             }
-
+            else {
+                editobj = -1;
+            }
+        },
+        moveOrResize: function(x,y){
+            var cursor = new ballobj(x,y,0,0,generalimages[0]);
+            if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
+                obstacles[editobj].updateObj(x,y);
+            }
+            else { //or check to see if the cursor is inside the bounding box
+                
+            }
         }
     }
 };
@@ -306,25 +317,24 @@ window.onload = function(){
     var $canvas = $('#canvas');
     var speed;
     var speedtimer;
+    var mousedown = 0;
 
     //I'm not sure we want to do this - it resets the game
     $(window).on('resize',function(){
         //resetAndResize();
     });
-/*
-    $canvas.mousemove(function(e){
-        if(!player.active){
-            var parentOffset = $(this).offset();
-            var relX = e.pageX - parentOffset.left;
-            player.xpos = parseInt(relX);
-            //allow mouse to move player vertically as well for collision detection testing
-            //var relY = e.pageY - parentOffset.top;
-            //player.ypos = parseInt(relY);
 
+    $canvas.mousemove(function(e){
+        if(mousedown && editobj != -1){ //if an object has been selected and clicked on
+            var offs = $(this).offset();
+            var newxpos = e.pageX - offs.left;
+            var newypos = e.pageY - offs.top;
+            lenny.editor.moveOrResize(newxpos,newypos);
         }
     });
-*/
+
     $canvas.on('mousedown',function(e){
+        mousedown = 1;
         if(mode == 1){
             if(ball.speed == 0){
                 speed = 0;
@@ -333,6 +343,7 @@ window.onload = function(){
         }
     });
     $canvas.on('mouseup',function(e){
+        mousedown = 0;
         var offs = $(this).offset();
         if(mode == 1){
             if(ball.speed == 0){

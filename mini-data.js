@@ -94,8 +94,10 @@ var ballobj = function(x,y,w,h,sprite){
 //generic wall object
 var wallobj = function(x1,y1,x2,y2){
     this.objtype = "wall";
-    this.xpos = x1;
-    this.ypos = y1;
+    this.xpos;
+    this.ypos;
+    this.x1pos = x1;
+    this.y1pos = y1;
     this.x2pos = x2;
     this.y2pos = y2;
     this.angle;
@@ -109,14 +111,14 @@ var wallobj = function(x1,y1,x2,y2){
     //draw - it's just a line
     this.draw = function(){
         canvas_cxt.beginPath();
-        canvas_cxt.moveTo(this.xpos,this.ypos);
+        canvas_cxt.moveTo(this.x1pos,this.y1pos);
         canvas_cxt.lineTo(this.x2pos,this.y2pos);
         canvas_cxt.stroke();
     }
     //calculate the angle of the wall. This is stored and used later when determining the angle to bounce balls off
     this.doSetup = function(){
-        var anglex = this.xpos - this.x2pos;
-        var angley = this.ypos - this.y2pos;
+        var anglex = this.x1pos - this.x2pos;
+        var angley = this.y1pos - this.y2pos;
         this.angle = Math.atan2(angley,anglex) * 180 / Math.PI;
         if(this.angle > 360){
             this.angle = this.angle - 360;
@@ -127,14 +129,37 @@ var wallobj = function(x1,y1,x2,y2){
         //console.log(this.angle);
         //work out bounds of wall
         //fixme slight hack to give a straight line a boundary
-        this.boundleft = Math.min(this.xpos,this.x2pos);
-        this.boundright = Math.max(this.xpos,this.x2pos);
-        this.boundup = Math.min(this.ypos,this.y2pos);
-        this.bounddown = Math.max(this.ypos,this.y2pos);
+        this.boundleft = Math.min(this.x1pos,this.x2pos);
+        this.boundright = Math.max(this.x1pos,this.x2pos);
+        this.boundup = Math.min(this.y1pos,this.y2pos);
+        this.bounddown = Math.max(this.y1pos,this.y2pos);
         //fixme bit inefficient to store this information twice
         this.objwidth = this.boundright - this.boundleft;
         this.objheight = this.bounddown - this.boundup;
+        this.xpos = this.boundleft; //fixme some inefficiency here, need an xpos and ypos to have generic draw functions for objects later
+        this.ypos = this.boundup;
     }
+    //if the object has been moved based on an x,y coord, update its position on the canvas
+    this.updateObj = function(x,y){
+        //work out the position of the exact mid point of the current obj
+        var midx = this.xpos + (this.objwidth / 2);
+        var midy = this.ypos + (this.objheight / 2);
+        //work out the difference between that and the mouse, which we assume is the exact mid point of the new position
+        var diffx = midx - x;
+        var diffy = midy - y;
+        //adjust each relevant attribute by that difference
+        this.xpos -= diffx;
+        this.ypos -= diffy;
+        this.x1pos -= diffx;
+        this.y1pos -= diffy;
+        this.x2pos -= diffx;
+        this.y2pos -= diffy;
+        this.boundleft -= diffx;
+        this.boundright -= diffx;
+        this.boundup -= diffy;
+        this.bounddown -= diffy;
+    }
+
     this.doSetup();
 }
 
@@ -154,11 +179,12 @@ var slopeobj = function(x,y,w,h,dir){
     this.boundleft;
     this.angle;
 
-    this.calculateAngle = function(){
+    this.doSetup = function(){
         this.boundleft = this.xpos;
         this.boundright = this.xpos + this.objwidth;
         this.boundup = this.ypos;
         this.bounddown = this.ypos + this.objheight;
+
         switch(this.slopedir){
             case 1:
                 this.angle = 270;
@@ -173,9 +199,14 @@ var slopeobj = function(x,y,w,h,dir){
                 this.angle = 180;
                 break;
         }
+        console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
 
     this.draw = function(){
+        /*
+        canvas_cxt.fillStyle = '#00FF00';
+        canvas_cxt.fillRect(this.boundleft,this.boundup,this.boundright,this.bounddown);
+        */
         var grd = canvas_cxt.createLinearGradient(this.xpos,this.ypos + this.objheight, this.xpos,this.ypos); //add linear gradient, defaults to 1 (n)
         //console.log(this.xpos,this.ypos,this.objwidth,this.objheight);
         if(this.slopedir == 2){
@@ -194,7 +225,25 @@ var slopeobj = function(x,y,w,h,dir){
         //canvas_cxt.fill();
         canvas_cxt.fillRect(this.xpos,this.ypos,this.objwidth,this.objheight);
     }
-    this.calculateAngle();
+    //if the object has been moved based on an x,y coord, update its position on the canvas
+    this.updateObj = function(x,y){
+        //work out the position of the exact mid point of the current obj
+        var midx = this.xpos + (this.objwidth / 2);
+        var midy = this.ypos + (this.objheight / 2);
+        //work out the difference between that and the mouse, which we assume is the exact mid point of the new position
+        var diffx = midx - x;
+        var diffy = midy - y;
+        //adjust each relevant attribute by that difference
+        this.xpos -= diffx;
+        this.ypos -= diffy;
+        this.boundleft -= diffx;
+        this.boundright -= diffx;
+        this.boundup -= diffy;
+        this.bounddown -= diffy;
+    }
+
+
+    this.doSetup();
 }
 
 
