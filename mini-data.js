@@ -199,14 +199,10 @@ var slopeobj = function(x,y,w,h,dir){
                 this.angle = 180;
                 break;
         }
-        console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
+        //console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
 
     this.draw = function(){
-        /*
-        canvas_cxt.fillStyle = '#00FF00';
-        canvas_cxt.fillRect(this.boundleft,this.boundup,this.boundright,this.bounddown);
-        */
         var grd = canvas_cxt.createLinearGradient(this.xpos,this.ypos + this.objheight, this.xpos,this.ypos); //add linear gradient, defaults to 1 (n)
         //console.log(this.xpos,this.ypos,this.objwidth,this.objheight);
         if(this.slopedir == 2){
@@ -219,10 +215,8 @@ var slopeobj = function(x,y,w,h,dir){
             grd = canvas_cxt.createLinearGradient(this.xpos + this.objwidth,this.ypos,this.xpos,this.ypos);
         }
         grd.addColorStop(0, '#88d595'); //light green
-        //this.grd.addColorStop(0, '#FF0000');
         grd.addColorStop(1, '#75936f'); //dark green
         canvas_cxt.fillStyle = grd;
-        //canvas_cxt.fill();
         canvas_cxt.fillRect(this.xpos,this.ypos,this.objwidth,this.objheight);
     }
     //if the object has been moved based on an x,y coord, update its position on the canvas

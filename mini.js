@@ -7,6 +7,7 @@ var mode = 1; //1,2,3: playing, drawing or editing
 var drawobj = 1; //defaults to wall
 var currobj = []; //stores the existing attributes of an object being created
 var editobj; //the currently being edited object
+var $editbox;
 
 (function( window, undefined ) {
 var lenny = {
@@ -292,19 +293,42 @@ var lenny = {
                 //get editable attributes
                 //put editable attributes into edit box
                 //put remove button into edit box
+                var attrs = [];
+                if(obst.objtype == "slope"){
+                    attrs.push(['Width',obst.objwidth,'objwidth']);
+                    attrs.push(['Height',obst.objheight,'objheight']);
+                    attrs.push(['Steepness',obst.steepness,'steepness']);
+                    attrs.push(['Slope direction (1 - 4)',obst.slopedir,'slopedir']);
+                }
+                else if(obst.objtype == "wall"){
+                    attrs.push(['x1',obst.x1pos,'x1pos']);
+                    attrs.push(['y1',obst.y1pos,'y1pos']);
+                    attrs.push(['x2',obst.x2pos,'x2pos']);
+                    attrs.push(['y2',obst.y2pos,'y2pos']);
+                }
+                $editbox.html('');
+                for(var i = 0; i < attrs.length; i++){
+                    //console.log(attrs[i]);
+                    $('<label/>').html(attrs[i][0]).appendTo($editbox);
+                    $('<input/>').attr('type','number').val(attrs[i][1]).attr('data-attr',attrs[i][2]).appendTo($editbox);
+                }
+                $('<button/>').html('Remove').addClass('js-removeobj').appendTo($editbox);
             }
             else {
-                editobj = -1;
+                lenny.editor.clearEditControls();
             }
         },
+        //fixme actually only moves
         moveOrResize: function(x,y){
             var cursor = new ballobj(x,y,0,0,generalimages[0]);
             if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
                 obstacles[editobj].updateObj(x,y);
             }
-            else { //or check to see if the cursor is inside the bounding box
-                
-            }
+        },
+        //deselect all objects
+        clearEditControls: function(){
+            editobj = -1;
+            $editbox.html('');
         }
     }
 };
@@ -318,11 +342,32 @@ window.onload = function(){
     var speed;
     var speedtimer;
     var mousedown = 0;
+    $editbox = $('#editable');
 
     //I'm not sure we want to do this - it resets the game
     $(window).on('resize',function(){
         //resetAndResize();
     });
+
+    //update attributes of an object in the editbox
+    $editbox.on('change','input[type="number"]',function(){
+        if(editobj != -1){
+            var thisattr = $(this).data('attr');
+            var thisval = parseInt($(this).val());
+            obstacles[editobj][thisattr] = thisval;
+            obstacles[editobj].doSetup();
+        }
+    });
+
+    //remove selected obstacle
+    $editbox.on('click','.js-removeobj',function(e){
+        e.preventDefault();
+        if(editobj != -1){
+            obstacles.splice(editobj, 1);
+            lenny.editor.clearEditControls();
+        }
+    });
+
 
     $canvas.mousemove(function(e){
         if(mousedown && editobj != -1){ //if an object has been selected and clicked on
