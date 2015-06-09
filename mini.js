@@ -263,19 +263,25 @@ var lenny = {
         }
     },
     editor: {
+        //change between test, draw and edit modes
         switchModes: function(chosen){
             //console.log(chosen);
             mode = chosen;
-            if(mode == 1){ //testing, need to reset some things
-                editobj = -1;
-            }
+            lenny.editor.clearEditControls();
         },
         drawObj: function(xpos,ypos){
+            console.log(drawobj);
             if(drawobj == 1){ //draw a wall
                 //console.log(xpos,ypos);
-                if(!currobj.len){
+                obstacles.push(new wallobj(xpos,ypos,xpos + 50,ypos + 50));
+                //fixme would be good to click twice, once to set each end of the wall, but this works for now
+                //if(!currobj.len){
                     //currobj.push(
-                }
+                //}
+            }
+            else if(drawobj == 2){ //draw a slope
+                console.log('a slope!');
+                obstacles.push(new slopeobj(xpos,ypos, 100, 100, 1));
             }
         },
         editObj: function(xpos,ypos){
@@ -329,6 +335,15 @@ var lenny = {
         clearEditControls: function(){
             editobj = -1;
             $editbox.html('');
+            obstacles.sort(lenny.editor.reSortObstacles);
+        },
+        //this is a bit of a temporary cludge, sorts all the obstacles so that walls get rendered on top of slopes
+        reSortObstacles: function(a,b){
+            if (a.objtype < b.objtype)
+                return -1;
+            if (a.objtype > b.objtype)
+                return 1;
+            return 0;
         }
     }
 };
