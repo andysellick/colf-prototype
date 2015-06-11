@@ -1,12 +1,14 @@
 var canvas;
 var canvas_cxt;
+var idealcanvwidth = 600;
+var idealcanvheight = 600;
 var game = 0;
 var gamepause = 0;
 var gameloop;
 var mode = 1; //1,2,3: playing, drawing or editing
 var drawobj = 1; //defaults to wall
 var currobj = []; //stores the existing attributes of an object being created
-var editobj; //the currently being edited object
+var editobj = -1; //the currently being edited object
 var $editbox;
 
 (function( window, undefined ) {
@@ -22,8 +24,8 @@ var lenny = {
         },
         initCanvasSize: function(){
             //ideal size for canvas
-            var destwidth = 600;
-            var destheight = 600;
+            var destwidth = idealcanvwidth;
+            var destheight = idealcanvheight;
             var aspect = Math.floor(($(window).height() / destheight) * destwidth);
 
             var cwidth = Math.min(destwidth, $(window).width());
@@ -51,9 +53,21 @@ var lenny = {
             obstacles = [];
 
             lenny.objects.setupBall();
-            //lenny.objects.setupWalls();
-            //lenny.objects.setupSlopes();
             lenny.objects.setupObstacles();
+        },
+        resizeCanvas: function(){
+            lenny.general.pauseGame();
+            //clearTimeout(gameloop);
+            ball.storePositions();
+            lenny.general.initCanvasSize();
+            lenny.general.clearCanvas();
+            ball.resizeObj();
+            for(var i = 0; i < obstacles.length; i++){
+                obstacles[i].resizeObj();
+            }
+            //lenny.general.initGame();
+            //lenny.game.gameLoop();
+            lenny.general.resumeGame();
         },
         //pause the game for a few milliseconds
         pauseGame: function(){
@@ -114,7 +128,7 @@ var lenny = {
     },
     objects: {
         setupBall: function(){
-            ball = new ballobj(canvas.width / 2,canvas.height / 2,10,10,generalimages[0]);
+            ball = new ballobj();
         },
         setupObstacles: function(){
             //fixme since combining all obstacles into one array it's harder to logically draw them in layers, so specific ordering is required
@@ -201,13 +215,13 @@ var lenny = {
                         //compare ball angle with slope angle
                         var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
                         var turnby = obst.steepness;
-                        console.log(turnby);
+                        //console.log(turnby);
                         if(angleDiff < 0){
                             turnby = -turnby;
                         }
 
                         if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
-                            ball.speed = Math.max(0,ball.speed -= 0.2); //fixme should relate to slope steepness
+                            ball.speed = Math.max(0,ball.speed -= (obst.steepness / 10)); //fixme should relate to slope steepness
                             ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
                         }
                         else { //increase if going down
@@ -270,7 +284,7 @@ var lenny = {
             lenny.editor.clearEditControls();
         },
         drawObj: function(xpos,ypos){
-            console.log(drawobj);
+            //console.log(drawobj);
             if(drawobj == 1){ //draw a wall
                 //console.log(xpos,ypos);
                 obstacles.push(new wallobj(xpos,ypos,xpos + 50,ypos + 50));
@@ -280,16 +294,17 @@ var lenny = {
                 //}
             }
             else if(drawobj == 2){ //draw a slope
-                console.log('a slope!');
+                //console.log('a slope!');
                 obstacles.push(new slopeobj(xpos,ypos, 100, 100, 1));
             }
         },
         editObj: function(xpos,ypos){
             var matched = 0;
-            var cursor = new ballobj(xpos,ypos,0,0,generalimages[0]);
+            var cursor = new ballobj(xpos,ypos);
             for(var i = 0; i < obstacles.length; i++){
                 if(lenny.game.checkCollision(obstacles[i],cursor)){
                     matched = 1;
+                    console.log(i);
                     break;
                 }
             }
@@ -300,11 +315,12 @@ var lenny = {
                 //put editable attributes into edit box
                 //put remove button into edit box
                 var attrs = [];
+                //attr list: label, value, attribute name, max (optional)
                 if(obst.objtype == "slope"){
                     attrs.push(['Width',obst.objwidth,'objwidth']);
                     attrs.push(['Height',obst.objheight,'objheight']);
                     attrs.push(['Steepness',obst.steepness,'steepness']);
-                    attrs.push(['Slope direction (1 - 4)',obst.slopedir,'slopedir']);
+                    attrs.push(['Slope direction (1 - 4)',obst.slopedir,'slopedir',4]);
                 }
                 else if(obst.objtype == "wall"){
                     attrs.push(['x1',obst.x1pos,'x1pos']);
@@ -313,10 +329,10 @@ var lenny = {
                     attrs.push(['y2',obst.y2pos,'y2pos']);
                 }
                 $editbox.html('');
+                //create elements to allow editing
                 for(var i = 0; i < attrs.length; i++){
-                    //console.log(attrs[i]);
                     $('<label/>').html(attrs[i][0]).appendTo($editbox);
-                    $('<input/>').attr('type','number').val(attrs[i][1]).attr('data-attr',attrs[i][2]).appendTo($editbox);
+                    $('<input/>').attr('type','number').val(attrs[i][1]).attr('data-attr',attrs[i][2]).attr('min',0).attr('max',attrs[i][3]).appendTo($editbox);
                 }
                 $('<button/>').html('Remove').addClass('js-removeobj').appendTo($editbox);
             }
@@ -326,7 +342,7 @@ var lenny = {
         },
         //fixme actually only moves
         moveOrResize: function(x,y){
-            var cursor = new ballobj(x,y,0,0,generalimages[0]);
+            var cursor = new ballobj(x,y);
             if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
                 obstacles[editobj].updateObj(x,y);
             }
@@ -358,11 +374,12 @@ window.onload = function(){
     var speedtimer;
     var mousedown = 0;
     $editbox = $('#editable');
+    var resize;
 
-    //I'm not sure we want to do this - it resets the game
-    $(window).on('resize',function(){
-        //resetAndResize();
-    });
+	$(window).on('resize',function(){
+        clearTimeout(resize); //don't resize immediately
+        resize = setTimeout(lenny.general.resizeCanvas,500);
+	});
 
     //update attributes of an object in the editbox
     $editbox.on('change','input[type="number"]',function(){
@@ -383,7 +400,7 @@ window.onload = function(){
         }
     });
 
-
+    //used when dragging and dropping an obstacle in edit mode
     $canvas.mousemove(function(e){
         if(mousedown && editobj != -1){ //if an object has been selected and clicked on
             var offs = $(this).offset();
@@ -408,6 +425,7 @@ window.onload = function(){
         if(mode == 1){
             if(ball.speed == 0){
                 clearInterval(speedtimer);
+                speed = ball.maxspeed; //temporary for testing
                 ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
             }
         }
@@ -421,28 +439,16 @@ window.onload = function(){
         }
     });
 
+    function increaseSpeed(){
+        speed = Math.min(speed += ball.accelerate, ball.maxspeed);
+    }
+
     $('.js-mode').on('click',function(){
         lenny.editor.switchModes($(this).val());
     });
     $('.js-draw').on('click',function(){
         drawobj = $(this).val();
     });
-
-    function increaseSpeed(){
-        speed = Math.min(speed += 1, ball.maxspeed);
-        //console.log(speed);
-    }
-
-    function resetAndResize(){
-        game = 0;
-        //level = 1;
-        //victory = 0;
-        clearTimeout(gameloop);
-        lenny.general.initCanvasSize();
-        lenny.general.clearCanvas();
-        lenny.general.initGame();
-        lenny.game.gameLoop();
-    }
 
 };
 

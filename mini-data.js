@@ -22,28 +22,88 @@ function preloadImages(array){
 
 
 //object for the ball
-var ballobj = function(x,y,w,h,sprite){
-    this.xpos = x;
-    this.ypos = y;
-    this.objwidth = w;
-    this.objheight = h;
-    this.sprite = sprite;
-    this.spritex = 0;
-    this.spritey = 0;
-    this.spritewidth = 10;
-    this.spriteheight = 10;
+var ballobj = function(xpos,ypos){
+    this.xpos = xpos;
+    this.ypos = ypos;
+    this.objwidth;
     this.speed = 0;
-    this.maxspeed = 10;
-    this.decelerate = 0.05;
+    this.maxspeed;
+    this.accelerate;
+    this.decelerate;
     this.angle;
-    this.lastx; //fixme might need this
+    this.lastx; //stores each moment the ball moves, used when bouncing off things
     this.lasty;
     this.origx; //stores where the ball started, in case it goes out of bounds
     this.origy;
+    
+    this.perc_xpos;
+    this.perc_ypos;
+    this.perc_objwidth;
+    this.perc_speed;
+    this.perc_maxspeed;
+    this.perc_accelerate;
+    this.perc_decelerate;
+    this.perc_lastx;
+    this.perc_lasty;
+    this.perc_origx;
+    this.perc_origy;
+    
+    //need to configure some initial values based on the size of the canvas. These will later be recalculated if the canvas is resized
+    this.doSetup = function(xpos,ypos){
+        this.maxspeed = (canvas.width / 100) * 1.67; //should be about 10px for a 600px canvas
+        this.accelerate = (canvas.width / 100) * 0.16666666666666666666666666666667; //should be about 1 for a 600px canvas
+        this.decelerate = (canvas.width / 100) * 0.0125; //should be about 0.075px for a 600px canvas
+        //we need to do this as we're creating temporary ball objects for easy collision detection based on where the mouse click was
+        if(!xpos){
+            this.xpos = canvas.width / 2;
+        }
+        if(!ypos){
+            this.ypos = canvas.width / 2;
+        }
+        this.objwidth = (canvas.width / 100) * 1.67; //10px on a 600px canvas
+    }
+    this.doSetup(xpos,ypos);
 
+    //called just before canvas resize, stores all relevant attributes as a percentage of the canvas size, to recalculate them shortly when canvas resizes
+    this.storePositions = function(){
+        this.perc_xpos = (this.xpos / canvas.width) * 100;
+        this.perc_ypos = (this.ypos / canvas.height) * 100;
+        this.perc_objwidth = (this.objwidth / canvas.width) * 100;
+        this.perc_speed = (this.speed / canvas.width) * 100;
+        this.perc_maxspeed = (this.maxspeed / canvas.width) * 100;
+        this.perc_accelerate = (this.accelerate / canvas.width) * 100;
+        this.perc_decelerate = (this.decelerate / canvas.width) * 100;
+        this.perc_lastx = (this.lastx / canvas.width) * 100;
+        this.perc_lasty = (this.lasty / canvas.height) * 100;
+        this.perc_origx = (this.origx / canvas.width) * 100;
+        this.perc_origy = (this.origy / canvas.width) * 100;
+    }
+    //using the percentage values for them, reposition all relevant attributes according to the new canvas size
+    this.resizeObj = function(){
+        this.xpos = (canvas.width / 100) * this.perc_xpos;
+        this.ypos = (canvas.width / 100) * this.perc_ypos;
+        this.objwidth = (canvas.width / 100) * this.perc_objwidth;
+        this.speed = (canvas.width / 100) * this.perc_speed;
+        this.maxspeed = (canvas.width / 100) * this.perc_maxspeed;
+        this.accelerate = (canvas.width / 100) * this.perc_accelerate;
+        this.decelerate = (canvas.width / 100) * this.perc_decelerate;
+        this.lastx = (canvas.width / 100) * this.perc_lastx;
+        this.lasty = (canvas.width / 100) * this.perc_lasty;
+        this.origx = (canvas.width / 100) * this.perc_origx;
+        this.origy = (canvas.width / 100) * this.perc_origy;
+    }
     this.draw = function(){
-        canvas_cxt.drawImage(this.sprite, this.spritex, this.spritey, this.spritewidth, this.spriteheight, this.xpos - (this.spritewidth / 2), this.ypos - (this.spriteheight / 2), this.objwidth, this.objheight);
+        //canvas_cxt.drawImage(this.sprite, this.spritex, this.spritey, this.spritewidth, this.spriteheight, this.xpos - (this.spritewidth / 2), this.ypos - (this.spriteheight / 2), this.objwidth, this.objheight);
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = 70;
+        
+        canvas_cxt.beginPath();
+        canvas_cxt.arc(this.xpos, this.ypos, this.objwidth / 2, 0, 2 * Math.PI, false);
+        canvas_cxt.fillStyle = 'green';
+        canvas_cxt.fill();
     };
+
     this.moveBall = function(mousex,mousey,speed){
         var anglex = ball.xpos - mousex;
         var angley = ball.ypos - mousey;
@@ -108,13 +168,12 @@ var wallobj = function(x1,y1,x2,y2){
     this.objwidth;
     this.objheight;
 
-    //draw - it's just a line
-    this.draw = function(){
-        canvas_cxt.beginPath();
-        canvas_cxt.moveTo(this.x1pos,this.y1pos);
-        canvas_cxt.lineTo(this.x2pos,this.y2pos);
-        canvas_cxt.stroke();
-    }
+    this.perc_x1pos;
+    this.perc_y1pos;
+    this.perc_x2pos;
+    this.perc_y2pos;
+
+
     //calculate the angle of the wall. This is stored and used later when determining the angle to bounce balls off
     this.doSetup = function(){
         var anglex = this.x1pos - this.x2pos;
@@ -138,6 +197,30 @@ var wallobj = function(x1,y1,x2,y2){
         this.objheight = this.bounddown - this.boundup;
         this.xpos = this.boundleft; //fixme some inefficiency here, need an xpos and ypos to have generic draw functions for objects later
         this.ypos = this.boundup;
+        
+        //set some stored values for what percentage of the canvas size key properties are, used on canvas resize
+        //(number_one / number_two) * 100
+        this.perc_x1pos = (this.x1pos / canvas.width) * 100;
+        this.perc_y1pos = (this.y1pos / canvas.height) * 100;
+        this.perc_x2pos = (this.x2pos / canvas.width) * 100;
+        this.perc_y2pos = (this.y2pos / canvas.height) * 100;
+    }
+    this.doSetup();
+
+    //using the percentage values for them, reposition all relevant attributes according to the new canvas size
+    this.resizeObj = function(){
+        this.x1pos = (canvas.width / 100) * this.perc_x1pos;
+        this.y1pos = (canvas.height / 100) * this.perc_y1pos;
+        this.x2pos = (canvas.width / 100) * this.perc_x2pos;
+        this.y2pos = (canvas.height / 100) * this.perc_y2pos;
+        this.doSetup();
+    }
+    //draw - it's just a line
+    this.draw = function(){
+        canvas_cxt.beginPath();
+        canvas_cxt.moveTo(this.x1pos,this.y1pos);
+        canvas_cxt.lineTo(this.x2pos,this.y2pos);
+        canvas_cxt.stroke();
     }
     //if the object has been moved based on an x,y coord, update its position on the canvas
     this.updateObj = function(x,y){
@@ -159,8 +242,6 @@ var wallobj = function(x1,y1,x2,y2){
         this.boundup -= diffy;
         this.bounddown -= diffy;
     }
-
-    this.doSetup();
 }
 
 
@@ -171,6 +252,7 @@ var slopeobj = function(x,y,w,h,dir){
     this.ypos = y;
     this.objwidth = w;
     this.objheight = h;
+
     this.slopedir = dir; //direction can be 1 (n), 2 (e), 3 (s), 4 (w). In each instance the direction is from up to down
     this.steepness = 1;
     this.boundup;
@@ -179,12 +261,25 @@ var slopeobj = function(x,y,w,h,dir){
     this.boundleft;
     this.angle;
 
+    this.perc_xpos;
+    this.perc_ypos;
+    this.perc_objwidth;
+    this.perc_objheight;
+
+    //do some initial setup when the obj is created
     this.doSetup = function(){
         this.boundleft = this.xpos;
         this.boundright = this.xpos + this.objwidth;
         this.boundup = this.ypos;
         this.bounddown = this.ypos + this.objheight;
 
+        //set some stored values for what percentage of the canvas size key properties are, used on canvas resize
+        //(number_one / number_two) * 100
+        this.perc_xpos = (this.xpos / canvas.width) * 100;
+        this.perc_ypos = (this.ypos / canvas.height) * 100;
+        this.perc_objwidth = (this.objwidth / canvas.width) * 100;
+        this.perc_objheight = (this.objheight / canvas.height) * 100;
+        
         switch(this.slopedir){
             case 1:
                 this.angle = 270;
@@ -201,6 +296,17 @@ var slopeobj = function(x,y,w,h,dir){
         }
         //console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
+    this.doSetup();
+
+    //using the percentage values for them, reposition all relevant attributes according to the new canvas size
+    this.resizeObj = function(){
+        this.xpos = (canvas.width / 100) * this.perc_xpos;
+        this.ypos = (canvas.height / 100) * this.perc_ypos;
+        this.objwidth = (canvas.width / 100) * this.perc_objwidth;
+        this.objheight = (canvas.width / 100) * this.perc_objheight;
+        this.doSetup();
+    }
+
 
     this.draw = function(){
         var grd = canvas_cxt.createLinearGradient(this.xpos,this.ypos + this.objheight, this.xpos,this.ypos); //add linear gradient, defaults to 1 (n)
@@ -235,9 +341,7 @@ var slopeobj = function(x,y,w,h,dir){
         this.boundup -= diffy;
         this.bounddown -= diffy;
     }
-
-
-    this.doSetup();
+    //fixme need to adjust walls for resizing
 }
 
 
