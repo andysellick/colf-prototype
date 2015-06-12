@@ -173,6 +173,20 @@ var wallobj = function(x1,y1,x2,y2){
     this.perc_x2pos;
     this.perc_y2pos;
 
+    //do some initial calc to make the game responsive
+    //this should only be called on game init
+    this.doPreSetup = function(){
+        //convert the following into a percentage of idealcanvwidth
+        //work out that percentage of actual canvas width then resize
+        this.x1pos = (this.x1pos / idealcanvwidth) * 100;
+        this.x1pos = (canvas.width / 100) * this.x1pos;
+        this.y1pos = (this.y1pos / idealcanvheight) * 100;
+        this.y1pos = (canvas.height / 100) * this.y1pos;
+        this.x2pos = (this.x2pos / idealcanvwidth) * 100;
+        this.x2pos = (canvas.width / 100) * this.x2pos;
+        this.y2pos = (this.y2pos / idealcanvheight) * 100;
+        this.y2pos = (canvas.height / 100) * this.y2pos;
+    }
 
     //calculate the angle of the wall. This is stored and used later when determining the angle to bounce balls off
     this.doSetup = function(){
@@ -205,6 +219,7 @@ var wallobj = function(x1,y1,x2,y2){
         this.perc_x2pos = (this.x2pos / canvas.width) * 100;
         this.perc_y2pos = (this.y2pos / canvas.height) * 100;
     }
+    this.doPreSetup();
     this.doSetup();
 
     //using the percentage values for them, reposition all relevant attributes according to the new canvas size
@@ -246,7 +261,7 @@ var wallobj = function(x1,y1,x2,y2){
 
 
 //generic slope object
-var slopeobj = function(x,y,w,h,dir){
+var slopeobj = function(x,y,w,h,dir,steepness){
     this.objtype = "slope";
     this.xpos = x;
     this.ypos = y;
@@ -254,7 +269,7 @@ var slopeobj = function(x,y,w,h,dir){
     this.objheight = h;
 
     this.slopedir = dir; //direction can be 1 (n), 2 (e), 3 (s), 4 (w). In each instance the direction is from up to down
-    this.steepness = 1;
+    this.steepness = steepness;
     this.boundup;
     this.boundright;
     this.bounddown;
@@ -266,7 +281,23 @@ var slopeobj = function(x,y,w,h,dir){
     this.perc_objwidth;
     this.perc_objheight;
 
+    //do some initial calc to make the game responsive
+    //this should only be called on game init
+    this.doPreSetup = function(){
+        //convert the following into a percentage of idealcanvwidth
+        //work out that percentage of actual canvas width then resize
+        this.xpos = (this.xpos / idealcanvwidth) * 100;
+        this.xpos = (canvas.width / 100) * this.xpos;
+        this.ypos = (this.ypos / idealcanvheight) * 100;
+        this.ypos = (canvas.height / 100) * this.ypos;
+        this.objwidth = (this.objwidth / idealcanvwidth) * 100;
+        this.objwidth = (canvas.width / 100) * this.objwidth;
+        this.objheight = (this.objheight / idealcanvheight) * 100;
+        this.objheight = (canvas.height / 100) * this.objheight;
+    }
+
     //do some initial setup when the obj is created
+    //this gets called again later on canvas resize
     this.doSetup = function(){
         this.boundleft = this.xpos;
         this.boundright = this.xpos + this.objwidth;
@@ -280,22 +311,24 @@ var slopeobj = function(x,y,w,h,dir){
         this.perc_objwidth = (this.objwidth / canvas.width) * 100;
         this.perc_objheight = (this.objheight / canvas.height) * 100;
         
+        //slopes are confusing
         switch(this.slopedir){
-            case 1:
+            case 1: //from down (top) to up (bottom)
                 this.angle = 270;
                 break;
-            case 2:
+            case 2: //from left (up) to right (down)
                 this.angle = 0;
                 break;
-            case 3:
+            case 3: //from up (top) to down (bottom)
                 this.angle = 90;
                 break;
-            case 4:
+            case 4: //from right (top) to left (bottom)
                 this.angle = 180;
                 break;
         }
         //console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
+    this.doPreSetup();
     this.doSetup();
 
     //using the percentage values for them, reposition all relevant attributes according to the new canvas size

@@ -130,18 +130,22 @@ var lenny = {
         setupBall: function(){
             ball = new ballobj();
         },
+        //all coordinates are based not on pixels but the assumption of the ideal size of the canvas, that is the values for idealcanvwidth and idealcanvheight
         setupObstacles: function(){
-            //fixme since combining all obstacles into one array it's harder to logically draw them in layers, so specific ordering is required
             //slopes
-            obstacles.push(new slopeobj(canvas.width / 4,canvas.height / 4, canvas.width / 8, canvas.height / 3, 1));
-            //obstacles.push(new slopeobj(canvas.width / 4 * 2,canvas.height / 2, canvas.width / 2, canvas.height / 2, 2));
-            //obstacles.push(new slopeobj(10,canvas.height / 8, canvas.width / 5, canvas.height / 5, 3));
-            //obstacles.push(new slopeobj(canvas.width / 2,canvas.height / 8, canvas.width / 5, canvas.height / 5, 4));
+            obstacles.push(new slopeobj(200,0,200,200,3,5));
+            obstacles.push(new slopeobj(400,200,200,200,4,5));
+            obstacles.push(new slopeobj(200,400,200,200,1,5));
+            obstacles.push(new slopeobj(0,200,200,200,2,5));
 
             //walls
-            obstacles.push(new wallobj(canvas.width/4,canvas.height/8,canvas.width/4 * 3,canvas.height/8 * 2));
-            obstacles.push(new wallobj(canvas.width/4,canvas.height/8 * 7,canvas.width/4 * 3,canvas.height/8 * 6));
+            //obstacles.push(new wallobj(100,100,900,800));
+
             /* temp boundary */
+            obstacles.push(new wallobj(10,10,580,10));
+            obstacles.push(new wallobj(580,10,580,580));
+            obstacles.push(new wallobj(580,580,10,580));
+            obstacles.push(new wallobj(10,580,10,10));
             //obstacles.push(new wallobj(5,5,canvas.width - 5,5));
             //obstacles.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
             //obstacles.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
@@ -425,7 +429,7 @@ window.onload = function(){
         if(mode == 1){
             if(ball.speed == 0){
                 clearInterval(speedtimer);
-                speed = ball.maxspeed; //temporary for testing
+                //speed = ball.maxspeed; //temporary for testing
                 ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
             }
         }
