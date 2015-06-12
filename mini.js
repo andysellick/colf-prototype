@@ -130,13 +130,13 @@ var lenny = {
         setupBall: function(){
             ball = new ballobj();
         },
-        //all coordinates are based not on pixels but the assumption of the ideal size of the canvas, that is the values for idealcanvwidth and idealcanvheight
+        //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,200,200,3,5));
-            obstacles.push(new slopeobj(400,200,200,200,4,5));
-            obstacles.push(new slopeobj(200,400,200,200,1,5));
-            obstacles.push(new slopeobj(0,200,200,200,2,5));
+            obstacles.push(new slopeobj(200,0,200,200,3,10));
+            //obstacles.push(new slopeobj(400,200,200,200,4,5));
+            obstacles.push(new slopeobj(200,400,200,200,1,1));
+            //obstacles.push(new slopeobj(0,200,200,200,2,5));
 
             //walls
             //obstacles.push(new wallobj(100,100,900,800));
@@ -146,23 +146,17 @@ var lenny = {
             obstacles.push(new wallobj(580,10,580,580));
             obstacles.push(new wallobj(580,580,10,580));
             obstacles.push(new wallobj(10,580,10,10));
-            //obstacles.push(new wallobj(5,5,canvas.width - 5,5));
-            //obstacles.push(new wallobj(canvas.width - 5,5,canvas.width - 5,canvas.height - 5));
-            //obstacles.push(new wallobj(canvas.width - 5,canvas.height - 5,5,canvas.height - 5));
-            //obstacles.push(new wallobj(5,canvas.height - 5,5,5));
-
         }
     },
     game: {
         gameLoop: function(){ //put code in here that needs to run for the game to work
             if(game){
                 lenny.general.clearCanvas(); //clear canvas, seems to be causing massive horrible flickering in firefox?
-
                 ball.move();
+                //console.log(ball.angle);
                 if(ball.speed){
                     lenny.game.checkCollisions();
                 }
-
                 for(var i = 0; i < obstacles.length; i++){
                     obstacles[i].draw();
                 }
@@ -215,27 +209,31 @@ var lenny = {
                     }
                 }
                 else if(obst.objtype == "slope"){
+                    //if ball angle is 90, a slope running down in the opposite direction would have an angle of 270. A slope running in the same direction would have an angle of 90
                     if(lenny.game.checkCollision(obst,ball)){
                         //compare ball angle with slope angle
                         var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
-                        var turnby = obst.steepness;
+                        console.log(angleDiff);
+                        var angleMax = lenny.maths.alterAngle(angleDiff,360,180);
+                        var turnby = obst.steepness / 2;
                         //console.log(turnby);
                         if(angleDiff < 0){
                             turnby = -turnby;
                         }
 
                         if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
-                            ball.speed = Math.max(0,ball.speed -= (obst.steepness / 10)); //fixme should relate to slope steepness
-                            ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                            ball.speed = Math.max(0,ball.speed -= ((ball.decelerate * obst.steepness) / 4)); //fixme should relate to slope steepness
+                            //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
                         }
                         else { //increase if going down
-                            ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2);
-                            ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
+                            ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2); //fixme this shouldn't be a hardcoded value but it currently breaks if it isn't
+                            //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
                         }
     
-                        if(ball.speed == 0){
+                        //fixme there's definitely a bug where a ball going up a slope pauses at the apex of its curve
+                        if(ball.speed <= 0){ //fixme bug here - if wall on slope, ball bounces into it infinitely
                             //console.log('wat');
-                            ball.speed += 0.4;
+                            ball.speed += ball.accelerate;
                             var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
                             if(angle < 0){
                                 ball.angle = lenny.maths.alterAngle(ball.angle,360,180 - (-angle * 2));
@@ -302,6 +300,8 @@ var lenny = {
                 obstacles.push(new slopeobj(xpos,ypos, 100, 100, 1));
             }
         },
+        //fixme need to adjust output in all boxes to use the new responsive 'percentage' values, not actual pixel values
+        //fixme need to round the numbers otherwise browser doesn't like floats in a number input
         editObj: function(xpos,ypos){
             var matched = 0;
             var cursor = new ballobj(xpos,ypos);
@@ -429,7 +429,7 @@ window.onload = function(){
         if(mode == 1){
             if(ball.speed == 0){
                 clearInterval(speedtimer);
-                //speed = ball.maxspeed; //temporary for testing
+                speed = ball.maxspeed; //temporary for testing
                 ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
             }
         }

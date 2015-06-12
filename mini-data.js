@@ -47,6 +47,7 @@ var ballobj = function(xpos,ypos){
     this.perc_lasty;
     this.perc_origx;
     this.perc_origy;
+    //fixme ball also needs a boundleft, right etc.
     
     //need to configure some initial values based on the size of the canvas. These will later be recalculated if the canvas is resized
     this.doSetup = function(xpos,ypos){
@@ -121,7 +122,6 @@ var ballobj = function(xpos,ypos){
         ball.speed = speed;
         ball.origx = ball.xpos;
         ball.origy = ball.ypos;
-        //console.log(ball.angle);
     },
     this.move = function(mousex,mousey){
         //if moving, keep moving, but reduce speed
@@ -312,20 +312,22 @@ var slopeobj = function(x,y,w,h,dir,steepness){
         this.perc_objheight = (this.objheight / canvas.height) * 100;
         
         //slopes are confusing
+        //this is really hard to describe. A slope starts at up and descends to down, except we need to invert all the angles to allow the ball to interact with them correctly
         switch(this.slopedir){
-            case 1: //from down (top) to up (bottom)
-                this.angle = 270;
+            case 1: //from bottom (up) to top (down)
+                this.angle = 270; //actually 90
                 break;
             case 2: //from left (up) to right (down)
-                this.angle = 0;
+                this.angle = 0; //actually 180
                 break;
-            case 3: //from up (top) to down (bottom)
-                this.angle = 90;
+            case 3: //from top (up) to bottom (down)
+                this.angle = 90; //actually 270
                 break;
-            case 4: //from right (top) to left (bottom)
-                this.angle = 180;
+            case 4: //from right (up) to left (down)
+                this.angle = 180; //actually 0
                 break;
         }
+        console.log(this.angle);
         //console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
     this.doPreSetup();
