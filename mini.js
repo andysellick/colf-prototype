@@ -134,9 +134,11 @@ var lenny = {
         setupObstacles: function(){
             //slopes
             obstacles.push(new slopeobj(200,0,200,200,3,10));
-            //obstacles.push(new slopeobj(400,200,200,200,4,5));
+            obstacles.push(new slopeobj(400,200,200,200,4,5));
             obstacles.push(new slopeobj(200,400,200,200,1,1));
-            //obstacles.push(new slopeobj(0,200,200,200,2,5));
+            obstacles.push(new slopeobj(0,200,200,200,2,5));
+
+            //obstacles.push(new slopeobj(0,0,600,600,2,5));
 
             //walls
             //obstacles.push(new wallobj(100,100,900,800));
@@ -151,7 +153,7 @@ var lenny = {
     game: {
         gameLoop: function(){ //put code in here that needs to run for the game to work
             if(game){
-                lenny.general.clearCanvas(); //clear canvas, seems to be causing massive horrible flickering in firefox?
+                lenny.general.clearCanvas();
                 ball.move();
                 //console.log(ball.angle);
                 if(ball.speed){
@@ -183,28 +185,21 @@ var lenny = {
         },
         checkCollisions: function(){
             for(var i = 0; i < obstacles.length; i++){
+                ball.onslope = 0; //this is a bit of a cludge
                 var obst = obstacles[i];
                 if(obst.objtype == "wall"){
-                    //if(lenny.game.checkCollision(walls[i],ball)){
                     if(lenny.game.checkLinesIntersect(obst.x1pos,obst.y1pos,obst.x2pos,obst.y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
-                        //work out which side of the wall the ball's last position was
-                        //check if ball's current position is the other side of the wall
+                        //work out which side of the wall the ball's last position was, check if ball's current position is the other side of the wall
                         var d = ((ball.xpos - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.ypos - obst.y1pos) * (obst.x2pos - obst.x1pos));
                         var lastd = ((ball.lastx - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.lasty - obst.y1pos) * (obst.x2pos - obst.x1pos));
-    
-                        //if so, calculate angle ball should bounce off wall
-                        //set ball angle, and it should bounce?
+                        //if so, calculate angle ball should bounce off wall, set ball angle, and it should bounce
                         if(d > 0 && lastd < 0 || d < 0 && lastd > 0){
-                            //console.log('ball:',ball.angle,'wall:',walls[i].angle);
-                            //var angle = 180 - Math.abs(Math.abs(ball.angle - walls[i].angle) - 180);
                             var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
                             angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
                             //now move the ball back to where it was to prevent flipping over the line bug
-                            //fixme need to do something better than this?
                             ball.xpos = ball.lastx;
                             ball.ypos = ball.lasty;
                             ball.angle = angle;
-                            //console.log(ball.angle,ball.xpos,ball.lastx,ball.speed);
                         }
                     }
                 }
@@ -213,7 +208,7 @@ var lenny = {
                     if(lenny.game.checkCollision(obst,ball)){
                         //compare ball angle with slope angle
                         var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
-                        console.log(angleDiff);
+                        //console.log(angleDiff);
                         var angleMax = lenny.maths.alterAngle(angleDiff,360,180);
                         var turnby = obst.steepness / 2;
                         //console.log(turnby);
@@ -222,17 +217,16 @@ var lenny = {
                         }
 
                         if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
-                            ball.speed = Math.max(0,ball.speed -= ((ball.decelerate * obst.steepness) / 4)); //fixme should relate to slope steepness
+                            ball.speed = ball.speed -= ((ball.decelerate * obst.steepness) / 4); //fixme should relate to slope steepness
                             //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
                         }
                         else { //increase if going down
-                            ball.speed = Math.min(ball.maxspeed,ball.speed += 0.2); //fixme this shouldn't be a hardcoded value but it currently breaks if it isn't
+                            ball.speed = Math.min(ball.maxspeed,ball.speed += (ball.accelerate) * 2);
                             //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
                         }
-    
                         //fixme there's definitely a bug where a ball going up a slope pauses at the apex of its curve
                         if(ball.speed <= 0){ //fixme bug here - if wall on slope, ball bounces into it infinitely
-                            //console.log('wat');
+                            console.log('turning');
                             ball.speed += ball.accelerate;
                             var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
                             if(angle < 0){
@@ -242,6 +236,8 @@ var lenny = {
                                 ball.angle = lenny.maths.alterAngle(ball.angle,360,-180 + (angle * 2));
                             }
                         }
+                        //console.clear();
+                        //console.log(ball.speed);
                     }
                 }
             }

@@ -47,12 +47,13 @@ var ballobj = function(xpos,ypos){
     this.perc_lasty;
     this.perc_origx;
     this.perc_origy;
+    this.onslope = 0;
     //fixme ball also needs a boundleft, right etc.
     
     //need to configure some initial values based on the size of the canvas. These will later be recalculated if the canvas is resized
     this.doSetup = function(xpos,ypos){
         this.maxspeed = (canvas.width / 100) * 1.67; //should be about 10px for a 600px canvas
-        this.accelerate = (canvas.width / 100) * 0.16666666666666666666666666666667; //should be about 1 for a 600px canvas
+        this.accelerate = (canvas.width / 100) * 0.0125; //should be about 0.075px for a 600px canvas //0.16666666666666666666666666666667; //should be about 1 for a 600px canvas
         this.decelerate = (canvas.width / 100) * 0.0125; //should be about 0.075px for a 600px canvas
         //we need to do this as we're creating temporary ball objects for easy collision detection based on where the mouse click was
         if(!xpos){
@@ -122,8 +123,8 @@ var ballobj = function(xpos,ypos){
         ball.speed = speed;
         ball.origx = ball.xpos;
         ball.origy = ball.ypos;
-    },
-    this.move = function(mousex,mousey){
+    }
+    this.move = function(){
         //if moving, keep moving, but reduce speed
         if(this.speed){
             this.lastx = this.xpos;
@@ -139,7 +140,41 @@ var ballobj = function(xpos,ypos){
             this.lastx = this.xpos;
             this.lasty = this.ypos;
         }
-    };
+    }
+    
+    //not yet in use - moving from the main file into here
+    this.checkCollisions = function(){
+        var collidedwith = -1;
+        var obst = 0;
+        for(var i = 0; i < obstacles.length; i++){
+            //do the wall action calculation immediately
+            obst = obstacles[i];
+            if(obst.objtype == "wall"){
+                if(lenny.game.checkLinesIntersect(obst.x1pos,obst.y1pos,obst.x2pos,obst.y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
+                    //work out which side of the wall the ball's last position was, check if ball's current position is the other side of the wall
+                    var d = ((ball.xpos - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.ypos - obst.y1pos) * (obst.x2pos - obst.x1pos));
+                    var lastd = ((ball.lastx - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.lasty - obst.y1pos) * (obst.x2pos - obst.x1pos));
+                    //if so, calculate angle ball should bounce off wall, set ball angle, and it should bounce
+                    if(d > 0 && lastd < 0 || d < 0 && lastd > 0){
+                        var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
+                        angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
+                        //now move the ball back to where it was to prevent flipping over the line bug
+                        ball.xpos = ball.lastx;
+                        ball.ypos = ball.lasty;
+                        ball.angle = angle;
+                    }
+                }
+            }
+            else {
+                //fixme need to either order the obstacles or loop through them so at the end of the loop
+                //we have the obstacle with the highest z-index - we don't want a slope beneath another slope
+                //altering the ball movement
+                obst = obstacles[i];
+            }
+        }    
+    }
+
+
     //if the ball goes off the canvas, reset it
     this.checkBoundary = function(){
         if(this.xpos > canvas.width || this.xpos < 0 || this.ypos > canvas.height || this.ypos < 0){
