@@ -107,8 +107,8 @@ var ballobj = function(xpos,ypos){
     };
 
     this.moveBall = function(mousex,mousey,speed){
-        var anglex = ball.xpos - mousex;
-        var angley = ball.ypos - mousey;
+        var anglex = this.xpos - mousex;
+        var angley = this.ypos - mousey;
         var theta = Math.atan2(angley,anglex) * 180 / Math.PI;
         if(theta > 360){
             theta = theta - 360;
@@ -119,10 +119,10 @@ var ballobj = function(xpos,ypos){
         //fixme coordinate system seems to be rotated by 90 degrees for some reason, is screwing up other stuff
 
         //console.log(mousex,mousey,theta,speed);
-        ball.angle = theta;
-        ball.speed = speed;
-        ball.origx = ball.xpos;
-        ball.origy = ball.ypos;
+        this.angle = theta;
+        this.speed = speed;
+        this.origx = this.xpos;
+        this.origy = this.ypos;
     }
     this.move = function(){
         //if moving, keep moving, but reduce speed
@@ -146,7 +146,8 @@ var ballobj = function(xpos,ypos){
     this.checkCollisions = function(){
         var collidedwith = -1;
         var obst = 0;
-        for(var i = 0; i < obstacles.length; i++){
+        var finalobst = 0;
+        for(var i = 0; i < obstacles.length; i++){ //fixme may need to invert this loop
             //do the wall action calculation immediately
             obst = obstacles[i];
             if(obst.objtype == "wall"){
@@ -164,18 +165,59 @@ var ballobj = function(xpos,ypos){
                         ball.angle = angle;
                     }
                 }
+                obst = 0; //fixme need to reset this after one wall, otherwise below gets screwed up. Presumably a better way to do this is possible.
             }
             else {
                 //fixme need to either order the obstacles or loop through them so at the end of the loop
                 //we have the obstacle with the highest z-index - we don't want a slope beneath another slope
                 //altering the ball movement
-                obst = obstacles[i];
+                if(lenny.game.checkCollision(obst,this)){
+                    finalobst = obstacles[i];
+                }
             }
-        }    
+        }
+        //if the ball is over an obstacle (hopefully the highest one) adjust speed and angle accordingly
+        if(finalobst){
+            //if it's a slope, adjust ball angle and speed accordingly
+            if(finalobst.objtype == "slope"){
+                //compare ball angle with slope angle
+                var angleDiff = lenny.maths.preserveAngleDiff(this.angle,finalobst.angle);
+                console.log(angleDiff);
+                var angleMax = lenny.maths.alterAngle(angleDiff,360,180);
+                var turnby = finalobst.steepness / 2;
+                //console.log(turnby);
+                if(angleDiff < 0){
+                    turnby = -turnby;
+                }
+
+                if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
+                    this.speed = this.speed -= ((this.decelerate * finalobst.steepness) / 4); //fixme should relate to slope steepness
+                    //this.angle = lenny.maths.alterAngle(this.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
+                }
+                else { //increase if going down
+                    this.speed = Math.min(this.maxspeed,this.speed += (this.accelerate) * 2);
+                    //this.angle = lenny.maths.alterAngle(this.angle,360,turnby);
+                }
+                //fixme there's definitely a bug where a ball going up a slope pauses at the apex of its curve
+                if(this.speed <= 0){ //fixme bug here - if wall on slope, ball bounces into it infinitely
+                    console.log('turning');
+                    this.speed += this.accelerate;
+                    var angle = lenny.maths.preserveAngleDiff(this.angle,finalobst.angle);
+                    if(angle < 0){
+                        this.angle = lenny.maths.alterAngle(this.angle,360,180 - (-angle * 2));
+                    }
+                    else {
+                        this.angle = lenny.maths.alterAngle(this.angle,360,-180 + (angle * 2));
+                    }
+                }                
+            }
+
+            //fixme add other property checks here e.g. sand
+        }
     }
 
 
-    //if the ball goes off the canvas, reset it
+    //if the ball goes off the canvas, reset it to where it started from
     this.checkBoundary = function(){
         if(this.xpos > canvas.width || this.xpos < 0 || this.ypos > canvas.height || this.ypos < 0){
             console.log('out of bounds');

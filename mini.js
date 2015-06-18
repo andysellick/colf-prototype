@@ -133,10 +133,10 @@ var lenny = {
         //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,200,200,3,10));
-            obstacles.push(new slopeobj(400,200,200,200,4,5));
-            obstacles.push(new slopeobj(200,400,200,200,1,1));
-            obstacles.push(new slopeobj(0,200,200,200,2,5));
+            obstacles.push(new slopeobj(200,0,400,200,3,10));
+            obstacles.push(new slopeobj(400,200,200,400,4,5));
+            obstacles.push(new slopeobj(0,400,400,200,1,1));
+            obstacles.push(new slopeobj(0,0,200,400,2,5));
 
             //obstacles.push(new slopeobj(0,0,600,600,2,5));
 
@@ -157,7 +157,8 @@ var lenny = {
                 ball.move();
                 //console.log(ball.angle);
                 if(ball.speed){
-                    lenny.game.checkCollisions();
+                    //lenny.game.checkCollisions();
+                    ball.checkCollisions();
                 }
                 for(var i = 0; i < obstacles.length; i++){
                     obstacles[i].draw();
@@ -183,6 +184,7 @@ var lenny = {
                 }
             }
         },
+        /*
         checkCollisions: function(){
             for(var i = 0; i < obstacles.length; i++){
                 ball.onslope = 0; //this is a bit of a cludge
@@ -206,42 +208,11 @@ var lenny = {
                 else if(obst.objtype == "slope"){
                     //if ball angle is 90, a slope running down in the opposite direction would have an angle of 270. A slope running in the same direction would have an angle of 90
                     if(lenny.game.checkCollision(obst,ball)){
-                        //compare ball angle with slope angle
-                        var angleDiff = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
-                        //console.log(angleDiff);
-                        var angleMax = lenny.maths.alterAngle(angleDiff,360,180);
-                        var turnby = obst.steepness / 2;
-                        //console.log(turnby);
-                        if(angleDiff < 0){
-                            turnby = -turnby;
-                        }
-
-                        if(Math.abs(angleDiff) > 90){ //decrease speed if going up a slope
-                            ball.speed = ball.speed -= ((ball.decelerate * obst.steepness) / 4); //fixme should relate to slope steepness
-                            //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
-                        }
-                        else { //increase if going down
-                            ball.speed = Math.min(ball.maxspeed,ball.speed += (ball.accelerate) * 2);
-                            //ball.angle = lenny.maths.alterAngle(ball.angle,360,turnby);
-                        }
-                        //fixme there's definitely a bug where a ball going up a slope pauses at the apex of its curve
-                        if(ball.speed <= 0){ //fixme bug here - if wall on slope, ball bounces into it infinitely
-                            console.log('turning');
-                            ball.speed += ball.accelerate;
-                            var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
-                            if(angle < 0){
-                                ball.angle = lenny.maths.alterAngle(ball.angle,360,180 - (-angle * 2));
-                            }
-                            else {
-                                ball.angle = lenny.maths.alterAngle(ball.angle,360,-180 + (angle * 2));
-                            }
-                        }
-                        //console.clear();
-                        //console.log(ball.speed);
                     }
                 }
             }
         },
+        */
         //check whether two lines intersect, e.g. the line of a wall and the path of the ball
         //https://gist.github.com/Joncom/e8e8d18ebe7fe55c3894
         checkLinesIntersect: function(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y) {
@@ -425,7 +396,7 @@ window.onload = function(){
         if(mode == 1){
             if(ball.speed == 0){
                 clearInterval(speedtimer);
-                speed = ball.maxspeed; //temporary for testing
+                //speed = ball.maxspeed; //temporary for testing
                 ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
             }
         }
@@ -440,7 +411,9 @@ window.onload = function(){
     });
 
     function increaseSpeed(){
-        speed = Math.min(speed += ball.accelerate, ball.maxspeed);
+        //speed = Math.min(speed += ball.accelerate, ball.maxspeed);
+        speed = Math.min(speed += 0.5, ball.maxspeed);
+        //console.log(speed);
     }
 
     $('.js-mode').on('click',function(){
