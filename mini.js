@@ -11,6 +11,7 @@ var currobj = []; //stores the existing attributes of an object being created
 var editobj = -1; //the currently being edited object
 var $editbox;
 var debug = '';
+var lastx,lasty;
 
 (function( window, undefined ) {
 var lenny = {
@@ -171,10 +172,13 @@ var lenny = {
                 //draw bounding box round element, if element being edited
                 if(mode == 3 && editobj > -1){
                     canvas_cxt.beginPath();
-                    canvas_cxt.rect(obstacles[editobj].xpos - 5, obstacles[editobj].ypos - 5, obstacles[editobj].objwidth + 10, obstacles[editobj].objheight + 10);
+                    canvas_cxt.rect(obstacles[editobj].xpos, obstacles[editobj].ypos, obstacles[editobj].objwidth, obstacles[editobj].objheight);
                     canvas_cxt.lineWidth = 2;
                     canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
                     canvas_cxt.stroke();
+                    
+                    //draw the resize box control
+                    obstacles[editobj].drawResizeControl();
                 }
 
                 ball.checkBoundary(); //need to do this last otherwise it causes a bug where balls right at the boundary but stopped by a wall cannot bounce off that wall if launched at full power
@@ -191,35 +195,6 @@ var lenny = {
             lenny.general.debug();
             debug = '';
         },
-        /*
-        checkCollisions: function(){
-            for(var i = 0; i < obstacles.length; i++){
-                ball.onslope = 0; //this is a bit of a cludge
-                var obst = obstacles[i];
-                if(obst.objtype == "wall"){
-                    if(lenny.game.checkLinesIntersect(obst.x1pos,obst.y1pos,obst.x2pos,obst.y2pos,ball.xpos,ball.ypos,ball.lastx,ball.lasty)){
-                        //work out which side of the wall the ball's last position was, check if ball's current position is the other side of the wall
-                        var d = ((ball.xpos - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.ypos - obst.y1pos) * (obst.x2pos - obst.x1pos));
-                        var lastd = ((ball.lastx - obst.x1pos) * (obst.y2pos - obst.y1pos)) - ((ball.lasty - obst.y1pos) * (obst.x2pos - obst.x1pos));
-                        //if so, calculate angle ball should bounce off wall, set ball angle, and it should bounce
-                        if(d > 0 && lastd < 0 || d < 0 && lastd > 0){
-                            var angle = lenny.maths.preserveAngleDiff(ball.angle,obst.angle);
-                            angle = lenny.maths.alterAngle(ball.angle,360,angle * 2);
-                            //now move the ball back to where it was to prevent flipping over the line bug
-                            ball.xpos = ball.lastx;
-                            ball.ypos = ball.lasty;
-                            ball.angle = angle;
-                        }
-                    }
-                }
-                else if(obst.objtype == "slope"){
-                    //if ball angle is 90, a slope running down in the opposite direction would have an angle of 270. A slope running in the same direction would have an angle of 90
-                    if(lenny.game.checkCollision(obst,ball)){
-                    }
-                }
-            }
-        },
-        */
         //check whether two lines intersect, e.g. the line of a wall and the path of the ball
         //https://gist.github.com/Joncom/e8e8d18ebe7fe55c3894
         checkLinesIntersect: function(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y) {
@@ -291,7 +266,7 @@ var lenny = {
             for(var i = 0; i < obstacles.length; i++){
                 if(lenny.game.checkCollision(obstacles[i],cursor)){
                     matched = 1;
-                    console.log(i);
+                    //console.log(i);
                     break;
                 }
             }
@@ -321,7 +296,7 @@ var lenny = {
                     $('<label/>').html(attrs[i][0]).appendTo($editbox);
                     $('<input/>').attr('type','number').val(attrs[i][1]).attr('data-attr',attrs[i][2]).attr('min',0).attr('max',attrs[i][3]).appendTo($editbox);
                 }
-                $('<button/>').html('Remove').addClass('js-removeobj').appendTo($editbox);
+                $('<button/>').html('Remove').addClass('js-removeobj removeobj').appendTo($editbox);
             }
             else {
                 lenny.editor.clearEditControls();
@@ -330,7 +305,14 @@ var lenny = {
         //fixme actually only moves
         moveOrResize: function(x,y){
             var cursor = new ballobj(x,y);
-            if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
+            if(obstacles[editobj].onResizeControl(x,y)){
+                //canvas.addClass('move');
+                $('#canvas').addClass('move'); //fixme
+                obstacles[editobj].mouseResizeObj(x,y);
+            }
+            else if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
+                //canvas.removeClass('move');
+                $('#canvas').removeClass('move'); //fixme
                 obstacles[editobj].updateObj(x,y);
             }
         },
@@ -393,12 +375,15 @@ window.onload = function(){
 
     //used when dragging and dropping an obstacle in edit mode
     $canvas.mousemove(function(e){
-        if(mousedown && editobj != -1){ //if an object has been selected and clicked on
-            var offs = $(this).offset();
-            var newxpos = e.pageX - offs.left;
-            var newypos = e.pageY - offs.top;
+        //fixme is this efficient? Now happens all the time when moving mouse, needed to update last pos though
+        var offs = $(this).offset();
+        var newxpos = e.pageX - offs.left;
+        var newypos = e.pageY - offs.top;
+        if(mousedown && editobj != -1){ //if an object has been selected and clicked on, move it
             lenny.editor.moveOrResize(newxpos,newypos);
         }
+        lastx = newxpos;
+        lasty = newypos;
     });
 
     $canvas.on('mousedown',function(e){

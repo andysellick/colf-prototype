@@ -2,6 +2,7 @@
 
 /* ------------- IMAGES ---------------- */
 
+/*
 var generalimages = ['ball.png']; //fixme could we just draw a circle for the ball?
 generalimages = preloadImages(generalimages);
 
@@ -16,7 +17,7 @@ function preloadImages(array){
     }
     return(array);
 }
-
+*/
 
 /* ------------ OBJECT DATA ------------ */
 
@@ -367,6 +368,15 @@ var wallobj = function(x1,y1,x2,y2){
         this.boundup -= diffy;
         this.bounddown -= diffy;
     }
+    
+    //draw little box in the corner that will allow resizing
+    this.drawResizeControl = function(){
+        canvas_cxt.beginPath();
+        canvas_cxt.rect(obstacles[editobj].x1pos - 5, obstacles[editobj].y1pos - 5, 20, 20);
+        canvas_cxt.lineWidth = 2;
+        canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
+        canvas_cxt.stroke();
+    }
 }
 
 
@@ -472,6 +482,19 @@ var slopeobj = function(x,y,w,h,dir,steepness){
     }
     //if the object has been moved based on an x,y coord, update its position on the canvas
     this.updateObj = function(x,y){
+        if(lastx){
+            var diffx = lastx - x;
+            var diffy = lasty - y;
+
+            this.xpos -= diffx;
+            this.ypos -= diffy;
+            this.boundleft -= diffx;
+            this.boundright -= diffx;
+            this.boundup -= diffy;
+            this.bounddown -= diffy;
+        }
+
+        /* temporarily disabled while i work out the resize
         //work out the position of the exact mid point of the current obj
         var midx = this.xpos + (this.objwidth / 2);
         var midy = this.ypos + (this.objheight / 2);
@@ -485,8 +508,40 @@ var slopeobj = function(x,y,w,h,dir,steepness){
         this.boundright -= diffx;
         this.boundup -= diffy;
         this.bounddown -= diffy;
+        */
     }
     //fixme need to adjust walls for resizing
+
+    //not to be confused with the resizeObj function
+    this.mouseResizeObj = function(x,y){
+        console.log('mouseResizeObj ',x,y,lastx,lasty);
+        //get the difference between the current mouse pos and the previous mouse pos
+
+        //this.objwidth = this.xpos + this.objwidth - x
+    }
+
+    //draw little box in the corner that will allow resizing
+    this.drawResizeControl = function(){
+        canvas_cxt.beginPath();
+        canvas_cxt.rect(obstacles[editobj].xpos, obstacles[editobj].ypos, 30, 30);
+        canvas_cxt.lineWidth = 2;
+        canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
+        canvas_cxt.stroke();
+    }
+    
+    //check to see if the mouse is over the resize control
+    this.onResizeControl = function(x,y){
+        //rule out any possible collisions, remembering that all y numbers are inverted on canvas
+        if(y < this.ypos) //player bottom edge is higher than object top edge
+            return(0);
+        if(y > this.ypos + 30) //player top edge is lower than obj bottom edge
+            return(0);
+        if(x > this.xpos + 30) //player left edge is to the right of obj right edge
+            return(0);
+        if(x < this.xpos) //player right edge is to the left of obj left edge
+            return(0);
+        return(1); //collision
+    }
 }
 
 
