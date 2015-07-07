@@ -483,10 +483,10 @@ var slopeobj = function(x,y,w,h,dir,steepness){
     //if the object has been moved based on an x,y coord, update its position on the canvas
     this.updateObj = function(x,y){
         if(lastx){
-            var diffx = lastx - x;
+            var diffx = lastx - x; //work out the difference between previous and current mouse positions...
             var diffy = lasty - y;
 
-            this.xpos -= diffx;
+            this.xpos -= diffx; //...then update relevant attributes accordingly
             this.ypos -= diffy;
             this.boundleft -= diffx;
             this.boundright -= diffx;
@@ -515,9 +515,25 @@ var slopeobj = function(x,y,w,h,dir,steepness){
     //not to be confused with the resizeObj function
     this.mouseResizeObj = function(x,y){
         console.log('mouseResizeObj ',x,y,lastx,lasty);
-        //get the difference between the current mouse pos and the previous mouse pos
+        if(x < this.xpos + this.objwidth && y < this.ypos + this.objheight){ //don't invert the object over itself
+            if(lastx){
+                var diffx = lastx - x;
+                var diffy = lasty - y;
 
-        //this.objwidth = this.xpos + this.objwidth - x
+                this.xpos -= diffx;
+                this.ypos -= diffy;
+                
+                this.objwidth += diffx;
+                this.objheight += diffy;
+
+                //update boundaries
+                //fixme generic function for this as code duplicated elsewhere?
+                this.boundleft = this.xpos;
+                this.boundright = this.xpos + this.objwidth;
+                this.boundup = this.ypos;
+                this.bounddown = this.ypos + this.objheight;
+            }
+        }
     }
 
     //draw little box in the corner that will allow resizing

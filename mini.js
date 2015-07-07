@@ -279,9 +279,7 @@ var lenny = {
                 var attrs = [];
                 //attr list: label, value, attribute name, max (optional)
                 if(obst.objtype == "slope"){
-                    attrs.push(['Width',obst.objwidth,'objwidth']);
-                    attrs.push(['Height',obst.objheight,'objheight']);
-                    attrs.push(['Steepness',obst.steepness,'steepness']);
+                    attrs.push(['Steepness',obst.steepness,'steepness']); //fixme can't have floats in number inputs but need slope to be between 0 and 1 - need to change it to 1 to 10 but divide it by 10 when calculating
                     attrs.push(['Slope direction (1 - 4)',obst.slopedir,'slopedir',4]);
                 }
                 else if(obst.objtype == "wall"){
@@ -372,6 +370,8 @@ window.onload = function(){
             lenny.editor.clearEditControls();
         }
     });
+    
+    //fixme bug, zindex of obstacles when editing/moving around appears to be reversed
 
     //used when dragging and dropping an obstacle in edit mode
     $canvas.mousemove(function(e){
