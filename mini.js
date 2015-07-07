@@ -10,6 +10,7 @@ var drawobj = 1; //defaults to wall
 var currobj = []; //stores the existing attributes of an object being created
 var editobj = -1; //the currently being edited object
 var $editbox;
+var debug = '';
 
 (function( window, undefined ) {
 var lenny = {
@@ -95,6 +96,9 @@ var lenny = {
             //var w = canvas.width;
             //canvas.width = 1;
             //canvas.width = w;
+        },
+        debug: function(){
+            $('#debug').html(debug);
         }
     },
     maths: {
@@ -133,10 +137,10 @@ var lenny = {
         //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,400,200,3,10));
-            obstacles.push(new slopeobj(400,200,200,400,4,5));
-            obstacles.push(new slopeobj(0,400,400,200,1,1));
-            obstacles.push(new slopeobj(0,0,200,400,2,5));
+            obstacles.push(new slopeobj(200,0,400,200,3,0.5));
+            obstacles.push(new slopeobj(400,200,200,400,4,0.5));
+            obstacles.push(new slopeobj(0,400,400,200,1,0.5));
+            obstacles.push(new slopeobj(0,0,200,400,2,0.5));
 
             //obstacles.push(new slopeobj(0,0,600,600,2,5));
 
@@ -178,11 +182,14 @@ var lenny = {
 
                 if(!gamepause){
                     gameloop = setTimeout(lenny.game.gameLoop,15); //repeat
+                    //gameloop = setTimeout(lenny.game.gameLoop,100); //repeat
                 }
                 else {
                     clearTimeout(gameloop);
                 }
             }
+            lenny.general.debug();
+            debug = '';
         },
         /*
         checkCollisions: function(){
@@ -251,6 +258,15 @@ var lenny = {
             //console.log(chosen);
             mode = chosen;
             lenny.editor.clearEditControls();
+            lenny.editor.updateControls();
+        },
+        updateControls: function(){
+            if(mode == 2){
+                $('#drawbox').show();
+            }
+            else {
+                $('#drawbox').hide();
+            }
         },
         drawObj: function(xpos,ypos){
             //console.log(drawobj);
@@ -346,6 +362,10 @@ window.onload = function(){
     var mousedown = 0;
     $editbox = $('#editable');
     var resize;
+    
+    //some initial setup for the edit box
+    $('.js-mode').val([1]); //need to pass value as array to set radio box check
+    lenny.editor.updateControls();
 
 	$(window).on('resize',function(){
         clearTimeout(resize); //don't resize immediately

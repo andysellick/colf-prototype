@@ -42,20 +42,31 @@
             padding:0 0 0.1em 0;
             cursor:pointer;
         }
+        .debug {
+            position:absolute;
+            top:0;
+            left:0;
+        }
+
     </style>
 </head>
 
 <body>
+    <div id="debug" class="debug"></div>
     <div class="controls">
-        <label><input type="radio" name="mode" class="js-mode" value="1" checked> Test</label>
-        <label><input type="radio" name="mode" class="js-mode" value="2"> Draw</label>
-        <label><input type="radio" name="mode" class="js-mode" value="3"> Edit</label>
-        <hr/>
-        Draw:
-        <label><input type="radio" name="obj" class="js-draw" value="1" checked/> Wall</label>
-        <label><input type="radio" name="obj" class="js-draw" value="2"/> Slope</label>
-        <hr/>
-        <div id="editable"></div>
+        <div class="box" id="modebox">
+            <label><input type="radio" name="mode" class="js-mode" value="1" checked> Test</label>
+            <label><input type="radio" name="mode" class="js-mode" value="2"> Draw</label>
+            <label><input type="radio" name="mode" class="js-mode" value="3"> Edit</label>
+        </div>
+
+        <div class="box" id="drawbox">
+            Draw:
+            <label><input type="radio" name="obj" class="js-draw" value="1" checked/> Wall</label>
+            <label><input type="radio" name="obj" class="js-draw" value="2"/> Slope</label>
+        </div>
+
+        <div id="editable" class="box"></div>
     </div>
     <canvas id="canvas" class="canvas"></canvas>
 
