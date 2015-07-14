@@ -1,7 +1,7 @@
 var canvas;
 var canvas_cxt;
-var idealcanvwidth = 600;
-var idealcanvheight = 600;
+var idealcanvwidth = 1618;
+var idealcanvheight = 1000;
 var game = 0;
 var gamepause = 0;
 var gameloop;
@@ -138,10 +138,10 @@ var lenny = {
         //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,400,200,3,0.5));
-            obstacles.push(new slopeobj(400,200,200,400,4,0.5));
-            obstacles.push(new slopeobj(0,400,400,200,1,0.5));
-            obstacles.push(new slopeobj(0,0,200,400,2,0.5));
+            obstacles.push(new slopeobj(200,0,1418,200,3,0.5));
+            obstacles.push(new slopeobj(1418,200,200,800,4,0.5));
+            obstacles.push(new slopeobj(0,800,1418,200,1,0.5));
+            obstacles.push(new slopeobj(0,0,200,800,2,0.5));
 
             //obstacles.push(new slopeobj(0,0,600,600,2,5));
 
@@ -149,10 +149,12 @@ var lenny = {
             //obstacles.push(new wallobj(100,100,900,800));
 
             /* temp boundary */
-            obstacles.push(new wallobj(10,10,580,10));
-            obstacles.push(new wallobj(580,10,580,580));
-            obstacles.push(new wallobj(580,580,10,580));
-            obstacles.push(new wallobj(10,580,10,10));
+            //1618, 1000
+            obstacles.push(new wallobj(10,10,1608,10));
+            obstacles.push(new wallobj(1608,10,1608,990));
+            obstacles.push(new wallobj(1608,990,10,990));
+            obstacles.push(new wallobj(10,990,10,10));
+
         }
     },
     game: {
@@ -401,7 +403,7 @@ window.onload = function(){
         if(mode == 1){
             if(ball.speed == 0){
                 clearInterval(speedtimer);
-                //speed = ball.maxspeed; //temporary for testing
+                speed = ball.maxspeed; //temporary for testing
                 ball.moveBall(e.pageX - offs.left,e.pageY - offs.top,speed);
             }
         }

@@ -53,17 +53,17 @@ var ballobj = function(xpos,ypos){
     
     //need to configure some initial values based on the size of the canvas. These will later be recalculated if the canvas is resized
     this.doSetup = function(xpos,ypos){
-        this.maxspeed = (canvas.width / 100) * 1.67; //should be about 10px for a 600px canvas
-        this.accelerate = (canvas.width / 100) * 0.0125; //should be about 0.075px for a 600px canvas //0.16666666666666666666666666666667; //should be about 1 for a 600px canvas
-        this.decelerate = (canvas.width / 100) * 0.005;
+        this.maxspeed = (canvas.height / 100); //should be about 10px for a 1000px canvas
+        this.accelerate = (canvas.height / 100000); //should be about 0.01px for a 1000px canvas
+        this.decelerate = (canvas.height / 10000) * 0.5;
         //we need to do this as we're creating temporary ball objects for easy collision detection based on where the mouse click was
         if(!xpos){
             this.xpos = canvas.width / 2;
         }
         if(!ypos){
-            this.ypos = canvas.width / 2;
+            this.ypos = canvas.height / 2;
         }
-        this.objwidth = (canvas.width / 100) * 1.67; //10px on a 600px canvas
+        this.objwidth = (canvas.height / 100) * 1.2; //12px on a 1000px canvas
     }
     this.doSetup(xpos,ypos);
 
@@ -71,29 +71,30 @@ var ballobj = function(xpos,ypos){
     this.storePositions = function(){
         this.perc_xpos = (this.xpos / canvas.width) * 100;
         this.perc_ypos = (this.ypos / canvas.height) * 100;
-        this.perc_objwidth = (this.objwidth / canvas.width) * 100;
-        this.perc_speed = (this.speed / canvas.width) * 100;
-        this.perc_maxspeed = (this.maxspeed / canvas.width) * 100;
-        this.perc_accelerate = (this.accelerate / canvas.width) * 100;
-        this.perc_decelerate = (this.decelerate / canvas.width) * 100;
+        this.perc_objwidth = (this.objwidth / canvas.height) * 100;
+        this.perc_speed = (this.speed / canvas.height) * 100;
+        this.perc_maxspeed = (this.maxspeed / canvas.height) * 100;
+        this.perc_accelerate = (this.accelerate / canvas.height) * 100;
+        this.perc_decelerate = (this.decelerate / canvas.height) * 100;
         this.perc_lastx = (this.lastx / canvas.width) * 100;
         this.perc_lasty = (this.lasty / canvas.height) * 100;
         this.perc_origx = (this.origx / canvas.width) * 100;
-        this.perc_origy = (this.origy / canvas.width) * 100;
+        this.perc_origy = (this.origy / canvas.height) * 100;
     }
     //using the percentage values for them, reposition all relevant attributes according to the new canvas size
+    //note we use height to calculate some as height was used originally
     this.resizeObj = function(){
         this.xpos = (canvas.width / 100) * this.perc_xpos;
-        this.ypos = (canvas.width / 100) * this.perc_ypos;
-        this.objwidth = (canvas.width / 100) * this.perc_objwidth;
-        this.speed = (canvas.width / 100) * this.perc_speed;
-        this.maxspeed = (canvas.width / 100) * this.perc_maxspeed;
-        this.accelerate = (canvas.width / 100) * this.perc_accelerate;
-        this.decelerate = (canvas.width / 100) * this.perc_decelerate;
+        this.ypos = (canvas.height / 100) * this.perc_ypos;
+        this.objwidth = (canvas.height / 100) * this.perc_objwidth;
+        this.speed = (canvas.height / 100) * this.perc_speed;
+        this.maxspeed = (canvas.height / 100) * this.perc_maxspeed;
+        this.accelerate = (canvas.height / 100) * this.perc_accelerate;
+        this.decelerate = (canvas.height / 100) * this.perc_decelerate;
         this.lastx = (canvas.width / 100) * this.perc_lastx;
-        this.lasty = (canvas.width / 100) * this.perc_lasty;
+        this.lasty = (canvas.height / 100) * this.perc_lasty;
         this.origx = (canvas.width / 100) * this.perc_origx;
-        this.origy = (canvas.width / 100) * this.perc_origy;
+        this.origy = (canvas.height / 100) * this.perc_origy;
     }
     this.draw = function(){
         //canvas_cxt.drawImage(this.sprite, this.spritex, this.spritey, this.spritewidth, this.spriteheight, this.xpos - (this.spritewidth / 2), this.ypos - (this.spriteheight / 2), this.objwidth, this.objheight);
@@ -458,7 +459,7 @@ var slopeobj = function(x,y,w,h,dir,steepness){
         this.xpos = (canvas.width / 100) * this.perc_xpos;
         this.ypos = (canvas.height / 100) * this.perc_ypos;
         this.objwidth = (canvas.width / 100) * this.perc_objwidth;
-        this.objheight = (canvas.width / 100) * this.perc_objheight;
+        this.objheight = (canvas.height / 100) * this.perc_objheight;
         this.doSetup();
     }
 
