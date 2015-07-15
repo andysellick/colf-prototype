@@ -54,7 +54,7 @@ var ballobj = function(xpos,ypos){
     //need to configure some initial values based on the size of the canvas. These will later be recalculated if the canvas is resized
     this.doSetup = function(xpos,ypos){
         this.maxspeed = (canvas.height / 100); //should be about 10px for a 1000px canvas
-        this.accelerate = (canvas.height / 100000); //should be about 0.01px for a 1000px canvas
+        this.accelerate = (canvas.height / 10000);
         this.decelerate = (canvas.height / 10000) * 0.5;
         //we need to do this as we're creating temporary ball objects for easy collision detection based on where the mouse click was
         if(!xpos){
@@ -212,15 +212,15 @@ var ballobj = function(xpos,ypos){
                 var percspeed = 1 - (this.speed / this.maxspeed);
                 //debug += "percspeed: " + percspeed + "<br/>";
 
-                //fixme also slope steepness?
-                var turnby = finalobst.steepness * (percang + percspeed);
-
+                var adjustedslope = (finalobst.steepness / 10);
+                var turnby = (adjustedslope * (percang + percspeed)) * 4;
+                //console.log(adjustedslope,turnby);
                 if(angleDiff < 0){
                     turnby = -turnby;
                 }
 
                 if(absAngleDiff > 90){ //decrease speed if going up a slope
-                    this.speed = Math.max(0,this.speed -= (this.decelerate * (finalobst.steepness)));
+                    this.speed = Math.max(0,this.speed -= (this.decelerate * (1 + finalobst.steepness)));
                     this.angle = lenny.maths.alterAngle(this.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
                 }
                 else if(absAngleDiff <= 180){ //increase if going down
@@ -563,10 +563,7 @@ var slopeobj = function(x,y,w,h,dir,steepness){
 
 
 
-var ball; //variable for the ball, will need more than one
-//var walls = []; //stores all walls
-//var slopes = []; //stores all slopes
-
+var ball; //variable for the ball, will need more than one at some point
 var obstacles = []; //stores all walls, slopes, etc.
 
 

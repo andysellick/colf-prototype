@@ -138,12 +138,10 @@ var lenny = {
         //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,1418,200,3,0.5));
-            obstacles.push(new slopeobj(1418,200,200,800,4,0.5));
-            obstacles.push(new slopeobj(0,800,1418,200,1,0.5));
-            obstacles.push(new slopeobj(0,0,200,800,2,0.5));
-
-            //obstacles.push(new slopeobj(0,0,600,600,2,5));
+            obstacles.push(new slopeobj(200,0,1418,400,3,5));
+            obstacles.push(new slopeobj(1418,400,200,600,4,5));
+            obstacles.push(new slopeobj(0,800,1418,200,1,5));
+            obstacles.push(new slopeobj(0,0,200,800,2,5));
 
             //walls
             //obstacles.push(new wallobj(100,100,900,800));
