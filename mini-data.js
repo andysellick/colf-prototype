@@ -147,7 +147,7 @@ var ballobj = function(xpos,ypos){
         }
         debug += "Ball: " + Math.round(ball.speed * 100) / 100 + ", " + Math.round(ball.angle * 100) / 100 + "<br/>";
     }
-    
+
     //not yet in use - moving from the main file into here
     this.checkCollisions = function(){
         var collidedwith = -1;
@@ -220,11 +220,11 @@ var ballobj = function(xpos,ypos){
                 }
 
                 if(absAngleDiff > 90){ //decrease speed if going up a slope
-                    this.speed = Math.max(0,this.speed -= (this.decelerate * (1 + finalobst.steepness)));
+                    this.speed = Math.max(0,this.speed -= (this.decelerate * (1.2 + adjustedslope)));
                     this.angle = lenny.maths.alterAngle(this.angle,360,turnby); //fixme need to have a min value here so ball doesn't slightly curve back on itself
                 }
                 else if(absAngleDiff <= 180){ //increase if going down
-                    this.speed = Math.min(this.maxspeed,this.speed += (this.accelerate * (finalobst.steepness)));
+                    this.speed = Math.min(this.maxspeed,this.speed += (this.accelerate * (1 + adjustedslope)));
                     this.angle = lenny.maths.alterAngle(this.angle,360,turnby);
                 }
                 //fixme there's definitely a bug where a ball going up a slope pauses at the apex of its curve
