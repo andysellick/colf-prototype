@@ -305,7 +305,6 @@ var lenny = {
             var cursor = new ballobj(x,y);
             if(obstacles[editobj].onResizeControl(x,y)){
                 //canvas.addClass('move');
-                $('#canvas').addClass('move'); //fixme
                 obstacles[editobj].mouseResizeObj(x,y);
             }
             else if(lenny.game.checkCollision(obstacles[editobj],cursor)){ //check to see if the cursor is inside the object
@@ -379,6 +378,21 @@ window.onload = function(){
         var offs = $(this).offset();
         var newxpos = e.pageX - offs.left;
         var newypos = e.pageY - offs.top;
+        //FIXME collision detection needs to be less scattered all over the place than this
+        //FIXME need a single function to handle class changes on the canvas
+        if(editobj != -1){
+            var cursor = new ballobj(newxpos,newypos);
+            if(obstacles[editobj].onResizeControl(newxpos,newypos)){
+                $('#canvas').addClass('resize');
+            }
+            else if(lenny.game.checkCollision(obstacles[editobj],cursor)){
+                $('#canvas').removeClass('resize').addClass('move');
+            }
+            else {
+                $('#canvas').removeClass('move').removeClass('resize');
+            }
+        }
+
         if(mousedown && editobj != -1){ //if an object has been selected and clicked on, move it
             lenny.editor.moveOrResize(newxpos,newypos);
         }
