@@ -308,11 +308,12 @@ var wallobj = function(x1,y1,x2,y2){
         }
         //console.log(this.angle);
         //work out bounds of wall
-        //fixme slight hack to give a straight line a boundary
-        this.boundleft = Math.min(this.x1pos,this.x2pos);
-        this.boundright = Math.max(this.x1pos,this.x2pos);
-        this.boundup = Math.min(this.y1pos,this.y2pos);
-        this.bounddown = Math.max(this.y1pos,this.y2pos);
+        //slight hack to give a straight line a boundary
+        var extra = 10;
+        this.boundleft = Math.min(this.x1pos - extra,this.x2pos  - extra);
+        this.boundright = Math.max(this.x1pos + extra,this.x2pos + extra);
+        this.boundup = Math.min(this.y1pos - extra,this.y2pos - extra);
+        this.bounddown = Math.max(this.y1pos + extra,this.y2pos + extra);
         //fixme bit inefficient to store this information twice
         this.objwidth = this.boundright - this.boundleft;
         this.objheight = this.bounddown - this.boundup;
@@ -366,10 +367,49 @@ var wallobj = function(x1,y1,x2,y2){
     //draw little box in the corner that will allow resizing
     this.drawResizeControl = function(){
         canvas_cxt.beginPath();
-        canvas_cxt.rect(obstacles[editobj].x1pos - 5, obstacles[editobj].y1pos - 5, 20, 20);
+        canvas_cxt.rect(obstacles[editobj].x1pos - 10, obstacles[editobj].y1pos - 10, 20, 20);
         canvas_cxt.lineWidth = 2;
         canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
         canvas_cxt.stroke();
+    }
+
+    //not to be confused with the resizeObj function
+    this.mouseResizeObj = function(x,y){
+        console.log('mouseResizeObj ',x,y,lastx,lasty);
+        if(lastx){
+            var diffx = lastx - x;
+            var diffy = lasty - y;
+
+            this.x1pos -= diffx;
+            this.y1pos -= diffy;
+
+            //update boundaries
+            //fixme generic function for this as code duplicated elsewhere?
+            var extra = 10;
+            this.boundleft = Math.min(this.x1pos - extra,this.x2pos  - extra);
+            this.boundright = Math.max(this.x1pos + extra,this.x2pos + extra);
+            this.boundup = Math.min(this.y1pos - extra,this.y2pos - extra);
+            this.bounddown = Math.max(this.y1pos + extra,this.y2pos + extra);
+            //fixme bit inefficient to store this information twice
+            this.objwidth = this.boundright - this.boundleft;
+            this.objheight = this.bounddown - this.boundup;
+            this.xpos = this.boundleft; //fixme some inefficiency here, need an xpos and ypos to have generic draw functions for objects later
+            this.ypos = this.boundup;
+        }
+    }
+
+    //check to see if the mouse is over the resize control
+    this.onResizeControl = function(x,y){
+        //rule out any possible collisions, remembering that all y numbers are inverted on canvas
+        if(y < this.y1pos - 10) //player bottom edge is higher than object top edge
+            return(0);
+        if(y > this.y1pos + 10) //player top edge is lower than obj bottom edge
+            return(0);
+        if(x > this.x1pos + 10) //player left edge is to the right of obj right edge
+            return(0);
+        if(x < this.x1pos - 10) //player right edge is to the left of obj left edge
+            return(0);
+        return(1); //collision
     }
 
     this.doPreSetup();
