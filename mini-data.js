@@ -288,15 +288,10 @@ var wallobj = function(x1,y1,x2,y2){
     //do some initial calc to make the game responsive
     //this should only be called on game init
     this.doPreSetup = function(){
-        //convert the following into a percentage of idealcanvwidth
-        //work out that percentage of actual canvas width then resize
-        this.x1pos = (this.x1pos / idealcanvwidth) * 100;
+        //coords are all percentages, convert these to actual numbers in relation to the current canvas size
         this.x1pos = (canvas.width / 100) * this.x1pos;
-        this.y1pos = (this.y1pos / idealcanvheight) * 100;
         this.y1pos = (canvas.height / 100) * this.y1pos;
-        this.x2pos = (this.x2pos / idealcanvwidth) * 100;
         this.x2pos = (canvas.width / 100) * this.x2pos;
-        this.y2pos = (this.y2pos / idealcanvheight) * 100;
         this.y2pos = (canvas.height / 100) * this.y2pos;
     }
 
@@ -331,8 +326,6 @@ var wallobj = function(x1,y1,x2,y2){
         this.perc_x2pos = (this.x2pos / canvas.width) * 100;
         this.perc_y2pos = (this.y2pos / canvas.height) * 100;
     }
-    this.doPreSetup();
-    this.doSetup();
 
     //using the percentage values for them, reposition all relevant attributes according to the new canvas size
     this.resizeObj = function(){
@@ -378,6 +371,10 @@ var wallobj = function(x1,y1,x2,y2){
         canvas_cxt.strokeStyle = 'rgba(215,70,70,0.5)';
         canvas_cxt.stroke();
     }
+
+    this.doPreSetup();
+    this.doSetup();
+
 }
 
 
@@ -403,17 +400,12 @@ var slopeobj = function(x,y,w,h,dir,steepness){
     this.perc_objheight;
 
     //do some initial calc to make the game responsive
-    //this should only be called on game init
+    //this should only be called on object creation
     this.doPreSetup = function(){
-        //convert the following into a percentage of idealcanvwidth
-        //work out that percentage of actual canvas width then resize
-        this.xpos = (this.xpos / idealcanvwidth) * 100;
+        //coords are all percentages, convert these to actual numbers in relation to the current canvas size
         this.xpos = (canvas.width / 100) * this.xpos;
-        this.ypos = (this.ypos / idealcanvheight) * 100;
         this.ypos = (canvas.height / 100) * this.ypos;
-        this.objwidth = (this.objwidth / idealcanvwidth) * 100;
         this.objwidth = (canvas.width / 100) * this.objwidth;
-        this.objheight = (this.objheight / idealcanvheight) * 100;
         this.objheight = (canvas.height / 100) * this.objheight;
     }
 
@@ -451,8 +443,6 @@ var slopeobj = function(x,y,w,h,dir,steepness){
         console.log(this.angle);
         //console.log('left:',this.boundleft,'right',this.boundright,'top',this.boundup,'bottom',this.bounddown);
     }
-    this.doPreSetup();
-    this.doSetup();
 
     //using the percentage values for them, reposition all relevant attributes according to the new canvas size
     this.resizeObj = function(){
@@ -559,6 +549,9 @@ var slopeobj = function(x,y,w,h,dir,steepness){
             return(0);
         return(1); //collision
     }
+
+    this.doPreSetup();
+    this.doSetup();
 }
 
 

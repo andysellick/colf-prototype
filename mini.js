@@ -135,24 +135,22 @@ var lenny = {
         setupBall: function(){
             ball = new ballobj();
         },
-        //all coordinates are based not on pixels but the ideal size of the canvas, idealcanvwidth and idealcanvheight and then scaled accordingly
+        //objects are based not on pixels but a percentage size of the canvas, these numbers are then calculated within object creation to be actual numbers in relation to the size of the canvas
         setupObstacles: function(){
             //slopes
-            obstacles.push(new slopeobj(200,0,1418,400,3,5));
-            obstacles.push(new slopeobj(1418,400,200,600,4,5));
-            obstacles.push(new slopeobj(0,800,1418,200,1,5));
-            obstacles.push(new slopeobj(0,0,200,800,2,5));
+            obstacles.push(new slopeobj(33,0,67,33,3,5));
+            obstacles.push(new slopeobj(66,33,34,67,4,5));
+            obstacles.push(new slopeobj(0,66,66,34,1,5));
+            obstacles.push(new slopeobj(0,0,33,66,2,5));
 
             //walls
             //obstacles.push(new wallobj(100,100,900,800));
 
-            /* temp boundary */
-            //1618, 1000
-            obstacles.push(new wallobj(10,10,1608,10));
-            obstacles.push(new wallobj(1608,10,1608,990));
-            obstacles.push(new wallobj(1608,990,10,990));
-            obstacles.push(new wallobj(10,990,10,10));
-
+            /* boundary */
+            obstacles.push(new wallobj(1,1,99,1));
+            obstacles.push(new wallobj(99,1,99,99));
+            obstacles.push(new wallobj(99,99,1,99));
+            obstacles.push(new wallobj(1,99,1,1));
         }
     },
     game: {
@@ -245,9 +243,14 @@ var lenny = {
         },
         drawObj: function(xpos,ypos){
             //console.log(drawobj);
+            
+            xpos = (xpos / canvas.width) * 100;
+            ypos = (ypos / canvas.height) * 100;
+            console.log(xpos,ypos);
+
             if(drawobj == 1){ //draw a wall
                 //console.log(xpos,ypos);
-                obstacles.push(new wallobj(xpos,ypos,xpos + 50,ypos + 50));
+                obstacles.push(new wallobj(xpos,ypos,xpos + 20,ypos));
                 //fixme would be good to click twice, once to set each end of the wall, but this works for now
                 //if(!currobj.len){
                     //currobj.push(
@@ -255,7 +258,7 @@ var lenny = {
             }
             else if(drawobj == 2){ //draw a slope
                 //console.log('a slope!');
-                obstacles.push(new slopeobj(xpos,ypos, 100, 100, 1));
+                obstacles.push(new slopeobj(xpos,ypos, 20, 20, 1));
             }
         },
         //fixme need to adjust output in all boxes to use the new responsive 'percentage' values, not actual pixel values
