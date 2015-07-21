@@ -13,6 +13,10 @@ var $editbox;
 var debug = '';
 var lastx,lasty;
 
+var ball; //variable for the ball, will need more than one at some point
+var obstacles = []; //stores all walls, slopes, etc.
+
+
 (function( window, undefined ) {
 var lenny = {
     general: {
