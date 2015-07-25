@@ -96,11 +96,6 @@ var lenny = {
         //completely clear the canvas
         clearCanvas: function(){
             canvas.width = canvas.width; //canvas can be reset simply by setting the width to the width!
-            //fixme prob better to just overwrite the whole canvas with a background than bother clearing it
-            //canvas_cxt.clearRect(0, 0, canvas.width, canvas.height);//clear the canvas
-            //var w = canvas.width;
-            //canvas.width = 1;
-            //canvas.width = w;
         },
         debug: function(){
             $('#debug').html(debug);
@@ -290,10 +285,7 @@ var lenny = {
                     attrs.push(['Slope direction (1 - 4)',obst.slopedir,'slopedir',4]);
                 }
                 else if(obst.objtype == "wall"){
-                    attrs.push(['x1',obst.x1pos,'x1pos']);
-                    attrs.push(['y1',obst.y1pos,'y1pos']);
-                    attrs.push(['x2',obst.x2pos,'x2pos']);
-                    attrs.push(['y2',obst.y2pos,'y2pos']);
+                    //all wall editing is now handled in-window
                 }
                 $editbox.html('');
                 //create elements to allow editing
